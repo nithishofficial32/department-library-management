@@ -1,0 +1,377 @@
+.nav-pill-btn {
+            position: relative;
+            z-index: 1;
+            transition:
+                background-color 0.3s ease,
+                color 0.3s ease,
+                box-shadow 0.3s ease,
+                transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        @media (hover: hover) and (pointer: fine) {
+            .nav-pill-btn:hover {
+                background-color: rgba(255, 255, 255, 0.22);
+                color: #ffffff;
+                transform: translateY(-1px);
+                box-shadow:
+                    inset 0 0 0 1px rgba(255, 255, 255, 0.3),
+                    inset 0 2px 5px rgba(255, 255, 255, 0.1),
+                    0 3px 7px rgba(0, 0, 0, 0.18);
+            }
+        }
+
+        .nav-pill-btn.tab-active {
+            background-color: rgba(255, 255, 255, 0.28);
+            color: #fef08a;
+            font-weight: 700;
+        }
+
+        .nav-pill-btn.tab-active::after {
+            content: '';
+            position: absolute;
+            bottom: 3px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 16px;
+            height: 2.5px;
+            background-color: #fbbf24;
+            border-radius: 9999px;
+        }
+
+        /* Sidebar sliding styles */
+        #sidebarMenu {
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding 0.3s ease, opacity 0.2s ease;
+        }
+
+        .collapsed-sidebar {
+            width: 0 !important;
+            min-width: 0 !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            border-right-width: 0 !important;
+            overflow: hidden !important;
+            opacity: 0 !important;
+            pointer-events: none;
+        }
+
+        /* Counter Transaction Styles */
+        .counter-transaction {
+            --ct-ink: #1e293b;
+            --ct-border: #dbe3ee;
+            width: 100%;
+            color: var(--ct-ink);
+            font-size: 12px;
+            background: #f1f5f9;
+            border: 1px solid var(--ct-border);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+        }
+
+        .counter-transaction .ct-header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            padding: 20px 24px;
+            background: #1e293b;
+            color: white;
+        }
+
+        .counter-transaction .ct-eyebrow {
+            margin-bottom: 5px;
+            color: #a5b4fc;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        .counter-transaction .ct-heading {
+            font-size: 19px;
+            font-weight: 700;
+        }
+
+        .counter-transaction .ct-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 5px;
+            background: #334155;
+            border-radius: 9px;
+        }
+
+        .counter-transaction .ct-tab {
+            padding: 8px 15px;
+            border-radius: 6px;
+            color: #cbd5e1;
+            font-weight: 600;
+            transition: background-color 0.2s, color 0.2s;
+        }
+
+        .counter-transaction .ct-tab:hover {
+            background: #475569;
+            color: white;
+        }
+
+        .counter-transaction .ct-tab.is-active {
+            color: #4338ca;
+            background: #eef2ff;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+        }
+
+        .counter-transaction .ct-body {
+            padding: 24px;
+            display: grid;
+            gap: 20px;
+        }
+
+        .counter-transaction .ct-member-grid {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr 1fr 130px;
+            gap: 16px;
+            align-items: start;
+        }
+
+        .counter-transaction .ct-panel {
+            min-width: 0;
+            padding: 18px;
+            background: white;
+            border: 1px solid var(--ct-border);
+            border-radius: 10px;
+        }
+
+        .counter-transaction .ct-panel-title {
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #4338ca;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .counter-transaction .ct-fields {
+            display: grid;
+            gap: 10px;
+        }
+
+        .counter-transaction .ct-field {
+            display: grid;
+            grid-template-columns: 100px minmax(0, 1fr);
+            gap: 10px;
+            align-items: center;
+        }
+
+        .counter-transaction .ct-field label {
+            color: #475569;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .counter-transaction .ct-field input {
+            min-width: 0;
+            width: 100%;
+            padding: 7px 9px;
+            border: 1px solid #cbd5e1;
+            border-radius: 5px;
+            background: white;
+            color: #1e293b;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .counter-transaction .ct-field input:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+        }
+
+        .counter-transaction .ct-field input[readonly] {
+            background: #f8fafc;
+            color: #64748b;
+        }
+
+        .counter-transaction .ct-photo {
+            padding: 14px 8px;
+            border: 1px dashed #cbd5e1;
+            border-radius: 10px;
+            background: #e2e8f0;
+            color: #64748b;
+            text-align: center;
+        }
+
+        .counter-transaction .ct-photo svg {
+            width: 90px;
+            height: 105px;
+            margin: 0 auto 8px;
+            color: #94a3b8;
+        }
+
+        .counter-transaction .ct-photo p {
+            font-size: 9px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .counter-transaction .ct-table-wrap {
+            overflow-x: auto;
+            border: 1px solid var(--ct-border);
+            border-radius: 9px;
+            background: white;
+        }
+
+        .counter-transaction .ct-table {
+            width: 100%;
+            min-width: 600px;
+            text-align: left;
+            border-collapse: collapse;
+        }
+
+        .counter-transaction .ct-table th {
+            padding: 11px 14px;
+            background: #eef2ff;
+            color: #4338ca;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .counter-transaction .ct-table td {
+            padding: 12px 14px;
+            height: 38px;
+            border-top: 1px solid #e2e8f0;
+            color: #475569;
+        }
+
+        .counter-transaction .ct-details-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 130px;
+            gap: 16px;
+            align-items: start;
+        }
+
+        .counter-transaction .ct-two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .counter-transaction .ct-cover {
+            min-height: 160px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 16px;
+            background: #e2e8f0;
+            border: 1px dashed #cbd5e1;
+            border-radius: 10px;
+            color: #64748b;
+            font-size: 10px;
+            text-align: center;
+        }
+
+        .counter-transaction .ct-cover svg {
+            width: 40px;
+            height: 40px;
+        }
+
+        .counter-transaction .ct-actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            gap: 10px;
+            padding-top: 18px;
+            border-top: 1px solid #dbe3ee;
+        }
+
+        .counter-transaction .ct-button {
+            padding: 9px 16px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            transition: background-color 0.2s;
+        }
+
+        .counter-transaction .ct-button-primary {
+            background: #4f46e5;
+            color: white;
+        }
+
+        .counter-transaction .ct-button-primary:hover {
+            background: #4338ca;
+        }
+
+        .counter-transaction .ct-button-teal {
+            background: #0f766e;
+            color: white;
+        }
+
+        .counter-transaction .ct-button-teal:hover {
+            background: #115e59;
+        }
+
+        .counter-transaction .ct-button-light {
+            background: #ecfdf5;
+            border: 1px solid #99f6e4;
+            color: #0f766e;
+        }
+
+        .counter-transaction .ct-button-light:hover {
+            background: #ccfbf1;
+        }
+
+        .counter-transaction .ct-button-close {
+            background: white;
+            border: 1px solid #cbd5e1;
+            color: #475569;
+        }
+
+        .counter-transaction .ct-button-close:hover {
+            background: #e2e8f0;
+        }
+
+        .counter-transaction .ct-message {
+            color: #b45309;
+            font-size: 11px;
+        }
+
+        .counter-transaction .ct-member-message {
+            color: #be123c;
+            font-size: 11px;
+        }
+
+        @media (max-width: 1200px) {
+            .counter-transaction .ct-member-grid,
+            .counter-transaction .ct-details-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .counter-transaction .ct-body,
+            .counter-transaction .ct-header {
+                padding: 16px;
+            }
+
+            .counter-transaction .ct-member-grid,
+            .counter-transaction .ct-details-grid,
+            .counter-transaction .ct-two-columns {
+                grid-template-columns: 1fr;
+            }
+
+            .counter-transaction .ct-photo {
+                max-width: 150px;
+            }
+
+            .counter-transaction .ct-actions {
+                justify-content: flex-start;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .nav-pill-btn, #sidebarMenu { transition: none; }
+            .nav-pill-btn:hover { transform: none; }
+        }

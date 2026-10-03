@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>Library Login</title>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+
+    margin: 0;
+
+    min-height: 100vh;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    font-family: Arial, sans-serif;
+
+    background:
+    linear-gradient(
+        135deg,
+        #0f172a,
+        #2563eb
+    );
+
+}
+
+.login-card {
+
+    width: 400px;
+
+    max-width: 92%;
+
+    background: white;
+
+    padding: 35px;
+
+    border-radius: 20px;
+
+    box-shadow:
+    0 20px 50px
+    rgba(0,0,0,0.3);
+
+}
+
+h1 {
+
+    text-align: center;
+
+    margin-bottom: 8px;
+
+}
+
+.subtitle {
+
+    text-align: center;
+
+    color: #666;
+
+    margin-bottom: 25px;
+
+}
+
+label {
+
+    display: block;
+
+    margin-top: 15px;
+
+    margin-bottom: 7px;
+
+    font-weight: bold;
+
+}
+
+input {
+
+    width: 100%;
+
+    padding: 13px;
+
+    border: 1px solid #ccc;
+
+    border-radius: 9px;
+
+    font-size: 15px;
+
+}
+
+input:focus {
+
+    outline: none;
+
+    border-color: #2563eb;
+
+}
+
+button {
+
+    width: 100%;
+
+    padding: 14px;
+
+    margin-top: 22px;
+
+    border: none;
+
+    border-radius: 9px;
+
+    background: #2563eb;
+
+    color: white;
+
+    font-size: 16px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+}
+
+button:hover {
+
+    background: #1d4ed8;
+
+}
+
+button:disabled {
+
+    opacity: 0.7;
+
+}
+
+#message {
+
+    text-align: center;
+
+    margin-top: 15px;
+
+    min-height: 22px;
+
+    font-weight: bold;
+
+}
+
+.demo {
+
+    margin-top: 20px;
+
+    padding: 12px;
+
+    background: #f3f4f6;
+
+    border-radius: 10px;
+
+    font-size: 13px;
+
+    color: #555;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="login-card">
+
+<h1>📚 Library Login</h1>
+
+<div class="subtitle">
+Department Library Management System
+</div>
+
+<form id="loginForm">
+
+<label>Email</label>
+
+<input
+type="email"
+id="email"
+placeholder="Enter your email"
+required
+>
+
+<label>Password</label>
+
+<input
+type="password"
+id="password"
+placeholder="Enter your password"
+required
+>
+
+<button
+type="submit"
+id="loginButton"
+>
+Login
+</button>
+
+</form>
+
+<div id="message"></div>
+
+<div class="demo">
+
+<b>Demo Admin Login</b>
+
+<br><br>
+
+Email:
+admin@grt.edu.in
+
+<br>
+
+Password:
+admin123
+
+</div>
+
+</div>
+
+<script>
+
+const form =
+document.getElementById("loginForm");
+
+const button =
+document.getElementById("loginButton");
+
+const message =
+document.getElementById("message");
+
+form.addEventListener("submit", async function(event) {
+
+    event.preventDefault();
+
+    const email =
+        document.getElementById("email").value.trim();
+
+    const password =
+        document.getElementById("password").value;
+
+    button.disabled = true;
+
+    button.innerText = "Logging in...";
+
+    message.innerText = "";
+
+    try {
+
+        const response =
+            await fetch("/api/login", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                    "application/json"
+                },
+
+                body: JSON.stringify({
+                    email,
+                    password
+                })
+
+            });
+
+        const data =
+            await response.json();
+
+        if (!response.ok) {
+
+            throw new Error(
+                data.message ||
+                "Login failed"
+            );
+
+        }
+
+        localStorage.setItem(
+            "libraryToken",
+            data.token
+        );
+
+        localStorage.setItem(
+            "libraryUser",
+            JSON.stringify(data.user)
+        );
+
+        message.style.color = "green";
+
+        message.innerText =
+            "Login successful!";
+
+        setTimeout(function() {
+
+            window.location.href =
+                "/index.html";
+
+        }, 500);
+
+    } catch (error) {
+
+        message.style.color = "red";
+
+        message.innerText =
+            error.message;
+
+    }
+
+    button.disabled = false;
+
+    button.innerText = "Login";
+
+});
+
+</script>
+
+</body>
+
+</html>
