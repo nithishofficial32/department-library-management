@@ -2,6 +2,7 @@ const express = require("express");
 const path = require("path");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const mongoose = require("mongoose");
 
 const app = express();
 
@@ -13,6 +14,56 @@ const PASSWORD = "admin123";
 
 const JWT_SECRET =
     "GRT_LIBRARY_SECRET_2026_CHANGE_LATER";
+
+
+
+
+/* =====================================
+   MONGODB CONNECTION
+===================================== */
+
+const MONGODB_URI =
+    "mongodb://127.0.0.1:27017/grt_library";
+
+mongoose
+    .connect(MONGODB_URI)
+    .then(() => {
+        console.log("");
+        console.log("🟢 MongoDB connected");
+        console.log("📦 Database: grt_library");
+        console.log("");
+    })
+    .catch((error) => {
+        console.error("");
+        console.error("🔴 MongoDB connection failed:");
+        console.error(error.message);
+        console.error("");
+    });
+
+/* =====================================
+   MONGODB BOOK MODEL
+===================================== */
+
+const bookSchema = new mongoose.Schema(
+    {
+        accn: {
+            type: String,
+            required: true,
+            unique: true,
+            trim: true
+        },
+
+        data: {
+            type: mongoose.Schema.Types.Mixed,
+            required: true
+        }
+    },
+    {
+        timestamps: true
+    }
+);
+
+const Book = mongoose.model("Book", bookSchema);
 
 
 /* =====================================
@@ -78,6 +129,158 @@ const passwordHash =
         PASSWORD,
         10
     );
+
+
+
+/* =====================================
+   BOOK / CATALOGUE API
+===================================== */
+
+/*
+   GET ALL BOOKS
+*/
+app.get(
+    "/api/books",
+    async (req, res) => {
+
+        try {
+
+            const records =
+                await Book.find()
+                    .sort({ createdAt: 1 })
+                    .lean();
+
+            const books =
+                records.map(record => ({
+                    ...(record.data || {}),
+                    accn: record.accn
+                }));
+
+            return res.json({
+                success: true,
+                books: books
+            });
+
+        } catch (error) {
+
+            console.error(
+                "❌ GET BOOKS ERROR:",
+                error
+            );
+
+            return res.status(500).json({
+                success: false,
+                message: "Unable to load books"
+            });
+
+        }
+
+    }
+);
+
+
+/*
+   SAVE / SYNC ALL BOOKS
+*/
+app.post(
+    "/api/books/sync",
+    async (req, res) => {
+
+        try {
+
+            const books =
+                Array.isArray(req.body.books)
+                    ? req.body.books
+                    : [];
+
+            const cleanedBooks = [];
+
+            const seen = new Set();
+
+            for (const originalBook of books) {
+
+                if (!originalBook) {
+                    continue;
+                }
+
+                const book = {
+                    ...originalBook
+                };
+
+                const accn =
+                    String(
+                        book.accn ||
+                        book.accession ||
+                        book.accessionNumber ||
+                        ""
+                    ).trim();
+
+                if (!accn) {
+                    continue;
+                }
+
+                const duplicateKey =
+                    accn.toLowerCase();
+
+                if (seen.has(duplicateKey)) {
+                    continue;
+                }
+
+                seen.add(duplicateKey);
+
+                book.accn = accn;
+
+                cleanedBooks.push(book);
+            }
+
+
+            await Book.deleteMany({});
+
+
+            if (cleanedBooks.length > 0) {
+
+                await Book.insertMany(
+                    cleanedBooks.map(book => ({
+                        accn: book.accn,
+                        data: book
+                    }))
+                );
+
+            }
+
+
+            return res.json({
+
+                success: true,
+
+                message:
+                    "Books synchronized successfully",
+
+                count:
+                    cleanedBooks.length
+
+            });
+
+        } catch (error) {
+
+            console.error(
+                "❌ SYNC BOOKS ERROR:",
+                error
+            );
+
+            return res.status(500).json({
+
+                success: false,
+
+                message:
+                    "Unable to save books"
+
+            });
+
+        }
+
+    }
+);
 
 
 /* =====================================
