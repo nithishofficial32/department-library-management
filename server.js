@@ -593,6 +593,138 @@ app.get("/dashboard.html", (req, res) => {
    START SERVER
 ===================================== */
 
+
+// ============================================================
+// GRT LIBRARY - MONGODB FULL DATA SYNC
+// ============================================================
+
+const libraryDataSchema = new mongoose.Schema(
+    {
+        key: {
+            type: String,
+            unique: true,
+            required: true
+        },
+        books: {
+            type: Array,
+            default: []
+        },
+        members: {
+            type: Array,
+            default: []
+        },
+        issues: {
+            type: Array,
+            default: []
+        },
+        reservations: {
+            type: Array,
+            default: []
+        },
+        fines: {
+            type: Array,
+            default: []
+        }
+    },
+    {
+        timestamps: true
+    }
+);
+
+const LibraryData =
+    mongoose.models.LibraryData ||
+    mongoose.model("LibraryData", libraryDataSchema);
+
+
+// GET ALL LMS LIBRARY DATA
+app.get("/api/library-data", async (req, res) => {
+    try {
+        const data = await LibraryData.findOne({
+            key: "main"
+        }).lean();
+
+        if (!data) {
+            return res.json({
+                success: true,
+                exists: false,
+                books: [],
+                members: [],
+                issues: [],
+                reservations: [],
+                fines: []
+            });
+        }
+
+        res.json({
+            success: true,
+            exists: true,
+            books: Array.isArray(data.books) ? data.books : [],
+            members: Array.isArray(data.members) ? data.members : [],
+            issues: Array.isArray(data.issues) ? data.issues : [],
+            reservations: Array.isArray(data.reservations)
+                ? data.reservations
+                : [],
+            fines: Array.isArray(data.fines) ? data.fines : []
+        });
+
+    } catch (error) {
+        console.error("❌ Library data load failed:", error);
+
+        res.status(500).json({
+            success: false,
+            message: "Library data load failed"
+        });
+    }
+});
+
+
+// SAVE ALL LMS LIBRARY DATA
+app.post("/api/library-data", async (req, res) => {
+    try {
+        const body = req.body || {};
+
+        const cleanArray = value =>
+            Array.isArray(value) ? value : [];
+
+        const data = await LibraryData.findOneAndUpdate(
+            { key: "main" },
+            {
+                key: "main",
+                books: cleanArray(body.books),
+                members: cleanArray(body.members),
+                issues: cleanArray(body.issues),
+                reservations: cleanArray(body.reservations),
+                fines: cleanArray(body.fines)
+            },
+            {
+                upsert: true,
+                new: true,
+                setDefaultsOnInsert: true
+            }
+        ).lean();
+
+        res.json({
+            success: true,
+            message: "Library data saved successfully",
+            counts: {
+                books: data.books.length,
+                members: data.members.length,
+                issues: data.issues.length,
+                reservations: data.reservations.length,
+                fines: data.fines.length
+            }
+        });
+
+    } catch (error) {
+        console.error("❌ Library data save failed:", error);
+
+        res.status(500).json({
+            success: false,
+            message: "Library data save failed"
+        });
+    }
+});
+
 app.listen(
     PORT,
     "0.0.0.0",

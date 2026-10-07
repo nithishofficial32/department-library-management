@@ -6468,3 +6468,233 @@ if (document.readyState === "loading") {
  END FINAL TARGETED MEMBER FORM FIX
  ========================================================= */
 
+
+/* ============================================================
+   GRT_MONGODB_LIBRARY_SYNC_20261007
+   Loads the existing LMS data from MongoDB and saves changes
+   through the existing grtSaveAllLibraryData() function.
+   ============================================================ */
+
+async function grtLoadLibraryDataFromMongoDB() {
+    try {
+        const response = await fetch("/api/library-data", {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(
+                "MongoDB data request failed: HTTP " + response.status
+            );
+        }
+
+        const data = await response.json();
+
+        if (!data || data.success !== true) {
+            throw new Error("MongoDB returned an invalid response.");
+        }
+
+        /*
+         * Only replace local data when MongoDB actually has
+         * a saved library record.
+         *
+         * This prevents an empty new database from destroying
+         * the existing browser data.
+         */
+        if (data.exists === true) {
+
+            if (Array.isArray(data.books)) {
+                dbBooks = data.books;
+                localStorage.setItem(
+                    GRT_DATA_STORAGE_KEYS.books,
+                    JSON.stringify(dbBooks)
+                );
+                localStorage.setItem(
+                    "dbBooks",
+                    JSON.stringify(dbBooks)
+                );
+            }
+
+            if (Array.isArray(data.members)) {
+                dbMembers = data.members;
+                localStorage.setItem(
+                    GRT_DATA_STORAGE_KEYS.members,
+                    JSON.stringify(dbMembers)
+                );
+                localStorage.setItem(
+                    "dbMembers",
+                    JSON.stringify(dbMembers)
+                );
+            }
+
+            if (Array.isArray(data.issues)) {
+                dbIssues = data.issues;
+                localStorage.setItem(
+                    GRT_DATA_STORAGE_KEYS.issues,
+                    JSON.stringify(dbIssues)
+                );
+            }
+
+            if (Array.isArray(data.reservations)) {
+                dbReservations = data.reservations;
+                localStorage.setItem(
+                    GRT_DATA_STORAGE_KEYS.reservations,
+                    JSON.stringify(dbReservations)
+                );
+            }
+
+            if (Array.isArray(data.fines)) {
+                dbFines = data.fines;
+                localStorage.setItem(
+                    GRT_DATA_STORAGE_KEYS.fines,
+                    JSON.stringify(dbFines)
+                );
+            }
+
+            console.log("🟢 MongoDB library data loaded successfully.");
+
+            /*
+             * Refresh currently visible member/book screens
+             * if the existing functions are available.
+             */
+            try {
+                if (typeof refreshMemberPage === "function") {
+                    refreshMemberPage();
+                }
+            } catch (e) {
+                console.warn("Member refresh skipped:", e);
+            }
+
+            try {
+                if (typeof loadSubpage === "function") {
+                    const activeModule =
+                        document.querySelector(".nav-pill-btn.tab-active");
+
+                    if (activeModule) {
+                        const moduleName =
+                            activeModule.getAttribute("data-module");
+
+                        if (moduleName === "member") {
+                            loadSubpage("Member");
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn("Current page refresh skipped:", e);
+            }
+
+        } else {
+            console.log(
+                "ℹ️ MongoDB library record does not exist yet."
+            );
+        }
+
+    } catch (error) {
+        console.warn(
+            "⚠️ MongoDB library data could not be loaded:",
+            error
+        );
+    }
+}
+
+
+async function grtSaveLibraryDataToMongoDB() {
+    try {
+
+        const payload = {
+            books: Array.isArray(dbBooks) ? dbBooks : [],
+            members: Array.isArray(dbMembers) ? dbMembers : [],
+            issues: Array.isArray(dbIssues) ? dbIssues : [],
+            reservations: Array.isArray(dbReservations)
+                ? dbReservations
+                : [],
+            fines: Array.isArray(dbFines) ? dbFines : []
+        };
+
+        const response = await fetch("/api/library-data", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            throw new Error(
+                "MongoDB save failed: HTTP " + response.status
+            );
+        }
+
+        const result = await response.json();
+
+        if (result.success !== true) {
+            throw new Error(
+                result.message || "MongoDB save failed."
+            );
+        }
+
+        console.log(
+            "🟢 MongoDB library data saved:",
+            result.counts
+        );
+
+    } catch (error) {
+        console.warn(
+            "⚠️ MongoDB library data save failed:",
+            error
+        );
+    }
+}
+
+
+/*
+ * Replace the existing local-only save function with a wrapper
+ * that keeps localStorage AND sends the same data to MongoDB.
+ *
+ * The original function is preserved under a different name.
+ */
+if (
+    typeof grtSaveAllLibraryData === "function" &&
+    typeof window.grtOriginalSaveAllLibraryData !== "function"
+) {
+
+    window.grtOriginalSaveAllLibraryData =
+        grtSaveAllLibraryData;
+
+    window.grtSaveAllLibraryData =
+        function () {
+
+            try {
+                window.grtOriginalSaveAllLibraryData();
+            } catch (error) {
+                console.warn(
+                    "⚠️ Existing local library save failed:",
+                    error
+                );
+            }
+
+            grtSaveLibraryDataToMongoDB();
+        };
+
+    console.log(
+        "🟢 Existing library save connected to MongoDB."
+    );
+}
+
+
+/*
+ * Load MongoDB data after the existing page startup code has
+ * finished loading its localStorage data.
+ */
+window.addEventListener(
+    "load",
+    function () {
+        setTimeout(
+            grtLoadLibraryDataFromMongoDB,
+            300
+        );
+    }
+);
+
