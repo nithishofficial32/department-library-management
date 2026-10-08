@@ -1,193 +1,93 @@
+let currentAdminPassword = 'admin123';
 
-/* ============================================================
-   ADMIN PASSWORD - SINGLE SOURCE OF TRUTH
-   ============================================================ */
+ let dbMembers = [
+ {
+ id: "110324104088",
+ name: "Nithish L Lingammoorthy",
+ batch: "2023-2027",
+ programme: "B.E.",
+ department: "Computer Science and Engineering",
+ photo: "https://randomuser.me/api/portraits/men/32.jpg",
+ section: "A",
+ gender: "Male",
+ status: "Active",
+ doj: "30-09-2026",
+ dol: "-",
+ type: "Student",
+ memberLock: "No",
+ lockReason: ""
+ },
+ {
+ id: "FAC001",
+ name: "Dr. K. Ramesh",
+ batch: "Staff",
+ programme: "Faculty",
+ department: "Computer Science and Engineering",
+ photo: "",
+ section: "CSE",
+ gender: "Male",
+ status: "Active",
+ doj: "01-06-2022",
+ dol: "-",
+ type: "Faculty",
+ memberLock: "No",
+ lockReason: ""
+ },
+ {
+ id: "110324104064",
+ name: "Nithish L",
+ batch: "2024-2028",
+ programme: "B.E.",
+ department: "Information Technology",
+ photo: "https://randomuser.me/api/portraits/men/54.jpg",
+ section: "B",
+ gender: "Male",
+ status: "Active",
+ doj: "30-09-2026",
+ dol: "-",
+ type: "Student",
+ memberLock: "No",
+ lockReason: ""
+ },
+ {
+ id: "110324104086",
+ name: "dhanvanth",
+ batch: "2023-2027",
+ programme: "B.E.",
+ department: "Computer Science and Engineering",
+ photo: "",
+ section: "A",
+ gender: "Male",
+ status: "Active",
+ doj: "01-10-2026",
+ dol: "-",
+ type: "Student",
+ memberLock: "No",
+ lockReason: ""
+ }
+ ];
 
-const GRT_DEFAULT_ADMIN_PASSWORD = 'admin123';
+ let dbBooks = [
+ { accn: "CS1001", title: "Introduction to Algorithms", author: "Cormen, Leiserson, Rivest", edition: "3rd", publisher: "MIT Press", callNo: "005.1 COR", subject: "Computer Science" },
+ { accn: "CS1002", title: "Artificial Intelligence: A Modern Approach", author: "Stuart Russell, Peter Norvig", edition: "4th", publisher: "Pearson", callNo: "006.3 RUS", subject: "Artificial Intelligence" },
+ { accn: "IT2001", title: "Database System Concepts", author: "Silberschatz, Korth, Sudarshan", edition: "7th", publisher: "McGraw-Hill", callNo: "005.74 SIL", subject: "Database Systems" },
+ { accn: "EC3001", title: "Digital Signal Processing", author: "John G. Proakis", edition: "4th", publisher: "Pearson", callNo: "621.382 PRO", subject: "Electronics" }
+ ];
 
-function grtGetAdminPassword() {
-    const changed =
-        localStorage.getItem('GRT_ADMIN_PASSWORD_CHANGED');
+ let dbIssues = [
+ { id: 1, accn: "CS1001", title: "Introduction to Algorithms", memberId: "110324104088", memberName: "Nithish L Lingammoorthy", issueDate: "2026-09-15", dueDate: "2026-09-29", renewals: 0, status: "Issued" },
+ { id: 2, accn: "CS1002", title: "Artificial Intelligence: A Modern Approach", memberId: "110324104064", memberName: "Nithish L", issueDate: "2026-09-10", dueDate: "2026-09-24", renewals: 1, status: "Issued" },
+ { id: 3, accn: "IT2001", title: "Database System Concepts", memberId: "FAC001", memberName: "Dr. K. Ramesh", issueDate: "2026-09-01", dueDate: "2026-10-01", renewals: 0, status: "Issued" }
+ ];
 
-    // Until a password is successfully changed,
-    // always use the original admin password.
-    if (changed !== 'true') {
-        return GRT_DEFAULT_ADMIN_PASSWORD;
-    }
+ let dbReservations = [
+ { id: 1, accn: "CS1001", title: "Introduction to Algorithms", memberId: "110324104086", memberName: "dhanvanth", reserveDate: "2026-09-25", status: "Waiting" }
+ ];
 
-    const stored =
-        (localStorage.getItem('GRT_ADMIN_PASSWORD') || '').trim();
-
-    return stored || GRT_DEFAULT_ADMIN_PASSWORD;
-}
-
-function grtSetAdminPassword(password) {
-    const value = String(password || '').trim();
-
-    if (!value) {
-        return false;
-    }
-
-    localStorage.setItem('GRT_ADMIN_PASSWORD', value);
-    localStorage.setItem('GRT_ADMIN_PASSWORD_CHANGED', 'true');
-
-    return grtGetAdminPassword() === value;
-}
-
-// Single source of truth for Admin password.
-let dbMembers = [];
-
- let dbBooks = [];
-
- let dbIssues = [];
-
- let dbReservations = [];
-
- let dbFines = [];
-
-/* GRT_RETURN_SEARCH_V1 */
-/* GRT_RETURN_DUE_FINE_RULE_V1 */
-function grtReturnHasOutstandingFine(issue) {
-    try {
-        if (!Array.isArray(dbFines)) {
-            return false;
-        }
-
-        const issueAccn = String(
-            issue.accn ||
-            issue.accession ||
-            issue.accessionNumber ||
-            ''
-        ).trim().toLowerCase();
-
-        const issueMemberId = String(
-            issue.memberId ||
-            issue.member ||
-            issue.memberID ||
-            ''
-        ).trim().toLowerCase();
-
-        return dbFines.some(fine => {
-            const fineAccn = String(
-                fine.accn ||
-                fine.accession ||
-                fine.accessionNumber ||
-                ''
-            ).trim().toLowerCase();
-
-            const fineMemberId = String(
-                fine.memberId ||
-                fine.member ||
-                fine.memberID ||
-                ''
-            ).trim().toLowerCase();
-
-            const sameBook =
-                fineAccn &&
-                issueAccn &&
-                fineAccn === issueAccn;
-
-            const sameMember =
-                fineMemberId &&
-                issueMemberId &&
-                fineMemberId === issueMemberId;
-
-            if (!sameBook && !sameMember) {
-                return false;
-            }
-
-            const status = String(
-                fine.status ||
-                fine.paymentStatus ||
-                ''
-            ).trim().toLowerCase();
-
-            if (
-                status === 'paid' ||
-                status === 'cleared' ||
-                status === 'collected' ||
-                status === 'settled'
-            ) {
-                return false;
-            }
-
-            const amount = Number(
-                fine.amount ??
-                fine.fineAmount ??
-                fine.fine ??
-                fine.balance ??
-                fine.pendingAmount ??
-                0
-            );
-
-            return amount > 0;
-        });
-
-    } catch (error) {
-        console.error(
-            'Return fine check error:',
-            error
-        );
-
-        return false;
-    }
-}
-
-function grtCanReturnBook(issue) {
-    const today = new Date();
-    const due = new Date(issue.dueDate);
-
-    const isOverdue =
-        !Number.isNaN(due.getTime()) &&
-        today > due;
-
-    const hasFine =
-        grtReturnHasOutstandingFine(issue);
-
-    return {
-        allowed: !isOverdue && !hasFine,
-        isOverdue,
-        hasFine
-    };
-}
-
-function grtFilterReturnBooks() {
-    const input = document.getElementById('grtReturnBookSearch');
-    const tbody = document.getElementById('grtReturnBookTableBody');
-    const noResults = document.getElementById('grtReturnNoSearchResults');
-
-    if (!input || !tbody) {
-        return;
-    }
-
-    const query = String(input.value || '').trim().toLowerCase();
-
-    const rows = Array.from(
-        tbody.querySelectorAll('tr[data-return-row="1"]')
-    );
-
-    let visibleCount = 0;
-
-    rows.forEach(row => {
-        const rowText = String(row.textContent || '').toLowerCase();
-        const matches = !query || rowText.includes(query);
-
-        row.style.display = matches ? '' : 'none';
-
-        if (matches) {
-            visibleCount++;
-        }
-    });
-
-    if (noResults) {
-        noResults.classList.toggle(
-            'hidden',
-            !query || visibleCount !== 0
-        );
-    }
-}
-
-
+ let dbFines = [
+ { id: 1, memberId: "110324104064", memberName: "Nithish L", accn: "CS1002", fineAmount: 16.00, reason: "8 Days Overdue", status: "Pending", collectedDate: "-" },
+ { id: 2, memberId: "110324104088", memberName: "Nithish L Lingammoorthy", accn: "CS1001", fineAmount: 6.00, reason: "3 Days Overdue", status: "Pending", collectedDate: "-" }
+ ];
 
  let systemUserRoles = [
  { id: 1, account: "admin_grt", role: "Super Administrator", privileges: "Full System Access, Settings, User Management", status: "Active" },
@@ -636,8 +536,8 @@ function grtFilterReturnBooks() {
  egate: ["Gate Register", "Visitor Log", "Summary"],
  catalogue: ["Book Entry"],
  search: ["Simple Search", "Advanced Search", "OPAC Catalog", "New Arrivals"],
- circulation: ["Issue", "Active Circulation", "Return", "Renewal", "Reservation", "Fine Collection"],
- admin: ["System Settings"],
+ circulation: ["Issue", "Active Circulation", "Return", "Renewal", "Reservation", "Fine Collection", "Settings"],
+ admin: ["User Roles", "System Settings", "Audit Logs"],
  help: ["User Manual", "About ", "Contact Support"]
  };
 
@@ -687,10 +587,12 @@ function grtFilterReturnBooks() {
  user === 'lmsadmin';
 
  const validPassword =
-        pass === grtGetAdminPassword();
+ pass === currentAdminPassword ||
+ pass === 'admin123';
 
  if (validUser && validPassword) {
-// Keep login only for the current browser session.
+
+ // Keep login only for the current browser session.
  // Refresh = stay logged in.
  // Closing the browser/tab = session normally ends.
  try {
@@ -718,7 +620,7 @@ function grtFilterReturnBooks() {
  return false;
  }
 
- alert('Invalid Admin User ID or Password.');
+ alert('Invalid Admin User ID or Password. Default is admin / admin123');
 
  if (passInput) {
  passInput.value = '';
@@ -844,122 +746,43 @@ function loadSidebar(module) {
 
  /* --- UNIQUE SYSTEM SETTINGS PASSWORD UPDATE HANDLER --- */
  function updateAdminPassword(event) {
-    event.preventDefault();
+ event.preventDefault();
+ const currentPass = document.getElementById('currAdminPass').value;
+ const newPass = document.getElementById('newAdminPass').value;
+ const confirmPass = document.getElementById('confirmAdminPass').value;
 
-    const currentInput =
-        document.getElementById('currAdminPass');
+ if (currentPass !== currentAdminPassword) {
+ alert('Current password entered is incorrect.');
+ return;
+ }
 
-    const newInput =
-        document.getElementById('newAdminPass');
+ if (newPass !== confirmPass) {
+ alert('New passwords do not match.');
+ return;
+ }
 
-    const confirmInput =
-        document.getElementById('confirmAdminPass');
+ if (newPass.length < 4) {
+ alert('Password must be at least 4 characters long.');
+ return;
+ }
 
-    if (!currentInput || !newInput || !confirmInput) {
-        alert('Password fields were not found.');
-        return false;
-    }
+ currentAdminPassword = newPass;
 
-    const currentPassword = currentInput.value.trim();
-    const newPassword = newInput.value.trim();
-    const confirmPassword = confirmInput.value.trim();
+ const btnText = document.getElementById('settingsBtnText');
+ const spinner = document.getElementById('settingsSpinner');
+ if(spinner) spinner.classList.remove('hidden');
+ if(btnText) btnText.innerText = "Securing System...";
 
-    /*
-     * IMPORTANT:
-     * Login and password change both use
-     * grtGetAdminPassword().
-     */
-
-    const actualPassword = grtGetAdminPassword();
-
-    if (currentPassword !== actualPassword) {
-        alert('Current password entered is incorrect.');
-        currentInput.focus();
-        return false;
-    }
-
-    if (newPassword.length < 4) {
-        alert('New password must be at least 4 characters long.');
-        newInput.focus();
-        return false;
-    }
-
-    if (newPassword !== confirmPassword) {
-        alert('New passwords do not match.');
-        confirmInput.focus();
-        return false;
-    }
-
-    if (newPassword === currentPassword) {
-        alert('New password must be different from the current password.');
-        newInput.focus();
-        return false;
-    }
-
-    /*
-     * Save the new password.
-     */
-
-    const saved = grtSetAdminPassword(newPassword);
-
-    if (!saved) {
-        alert('Unable to save the new password.');
-        return false;
-    }
-
-    /*
-     * Verify immediately.
-     */
-
-    const verification =
-        localStorage.getItem('GRT_ADMIN_PASSWORD');
-
-    if (verification !== newPassword) {
-        alert('Password verification failed.');
-        return false;
-    }
-
-    const buttonText =
-        document.getElementById('settingsBtnText');
-
-    const spinner =
-        document.getElementById('settingsSpinner');
-
-    if (spinner) {
-        spinner.classList.remove('hidden');
-    }
-
-    if (buttonText) {
-        buttonText.innerText = 'Securing System...';
-    }
-
-    setTimeout(() => {
-
-        if (spinner) {
-            spinner.classList.add('hidden');
-        }
-
-        if (buttonText) {
-            buttonText.innerText = 'Update Password';
-        }
-
-        alert('Admin password updated successfully!');
-
-        currentInput.value = '';
-        newInput.value = '';
-        confirmInput.value = '';
-
-        if (
-            typeof updatePasswordStrengthIndicator ===
-            'function'
-        ) {
-            updatePasswordStrengthIndicator('');
-        }
-
-    }, 800);
-
-    return false;
-}
+ setTimeout(() => {
+ if(spinner) spinner.classList.add('hidden');
+ if(btnText) btnText.innerText = "Update Password";
+ alert('Admin password updated successfully! Please use your new password on next login.');
+ document.getElementById('currAdminPass').value = '';
+ document.getElementById('newAdminPass').value = '';
+ document.getElementById('confirmAdminPass').value = '';
+ updatePasswordStrengthIndicator('');
+ }, 800);
+ }
 
  function updatePasswordStrengthIndicator(val) {
  const bar = document.getElementById('pwStrengthBar');
@@ -1922,24 +1745,6 @@ function grtIssueBackToMember() {
 }
 
 
-/* GRT_GLOBAL_LOAN_DAYS_FIX */
-function grtGetLoanDays() {
-    try {
-        const saved = localStorage.getItem('GRT_FINE_SETTINGS');
-        const data = saved ? JSON.parse(saved) : {};
-
-        return Math.max(
-            1,
-            Math.min(
-                365,
-                Number(data.loanDays) || 14
-            )
-        );
-    } catch (error) {
-        return 14;
-    }
-}
-
 function processIssueBook(event) {
 
     if (event) {
@@ -2239,7 +2044,7 @@ function processIssueBook(event) {
  }
 
  const due = new Date(issue.dueDate);
- due.setDate(due.getDate() + grtGetLoanDays());
+ due.setDate(due.getDate() + 14);
  issue.dueDate = due.toISOString().split('T')[0];
  issue.renewals += 1;
 
@@ -3179,7 +2984,7 @@ function editMember(id) {
             <button
                 type="button"
                 onclick="loadSubpage('Member')"
-                class="issue-member-next-opposite-photo px-3 py-1 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded text-xs font-bold">
+                class="px-3 py-1 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded text-xs font-bold">
                 &larr; Back
             </button>
 
@@ -5254,175 +5059,59 @@ if (title === 'Active Circulation') {
 
 if (title === 'Return') {
  const activeIssues = dbIssues.filter(i => i.status === "Issued");
-
  const returnRows = activeIssues.map(i => {
  const today = new Date();
  const due = new Date(i.dueDate);
  const isOverdue = today > due;
- const diffDays = isOverdue
-     ? Math.ceil((today - due) / (1000 * 60 * 60 * 24))
-     : 0;
-
+ const diffDays = isOverdue ? Math.ceil((today - due) / (1000 * 60 * 60 * 24)) : 0;
  return `
- <tr
-     data-return-row="1"
-     class="hover:bg-gray-50 border-b"
- >
+ <tr class="hover:bg-gray-50 border-b">
  <td class="p-2 font-mono font-bold text-blue-900 border-r">${escapeHtml(i.accn)}</td>
-
- <td class="p-2 font-semibold border-r">
-     ${escapeHtml(i.title)}
- </td>
-
- <td class="p-2 font-mono border-r">
-     ${escapeHtml(i.memberId)}
- </td>
-
+ <td class="p-2 font-semibold border-r">${escapeHtml(i.title)}</td>
+ <td class="p-2 font-mono border-r">${escapeHtml(i.memberId)}</td>
+ <td class="p-2 border-r">${escapeHtml(i.memberName)}</td>
+ <td class="p-2 border-r font-bold ${isOverdue ? 'text-rose-600' : 'text-gray-700'}">${escapeHtml(i.dueDate)}</td>
  <td class="p-2 border-r">
-     ${escapeHtml(i.memberName)}
+ <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isOverdue ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'}">
+ ${isOverdue ? `${diffDays} Days Overdue (₹${diffDays * 2})` : 'Normal'}
+ </span>
  </td>
-
- <td class="p-2 border-r font-bold ${isOverdue ? 'text-rose-600' : 'text-gray-700'}">
-     ${escapeHtml(i.dueDate)}
- </td>
-
- <td class="p-2 border-r">
-     <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isOverdue ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'}">
-         ${isOverdue ? `${diffDays} Days Overdue (₹${diffDays * 2})` : 'Normal'}
-     </span>
- </td>
-
  <td class="p-2 text-center">
-     ${
-         (() => {
-             const returnState = grtCanReturnBook(i);
-
-             if (returnState.allowed) {
-                 return `
-                     <button
-                         type="button"
-                         onclick="processReturnBook('${i.accn}')"
-                         class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded shadow-sm text-xs"
-                     >
-                         Return
-                     </button>
-                 `;
-             }
-
-             if (returnState.hasFine && returnState.isOverdue) {
-                 return `
-                     <span class="inline-block px-3 py-1 bg-rose-100 text-rose-700 rounded font-bold text-[10px]">
-                         Overdue + Fine Pending
-                     </span>
-                 `;
-             }
-
-             if (returnState.hasFine) {
-                 return `
-                     <span class="inline-block px-3 py-1 bg-amber-100 text-amber-700 rounded font-bold text-[10px]">
-                         Fine Pending
-                     </span>
-                 `;
-             }
-
-             return `
-                 <span class="inline-block px-3 py-1 bg-rose-100 text-rose-700 rounded font-bold text-[10px]">
-                     Overdue
-                 </span>
-             `;
-         })()
-     }
+ <button onclick="processReturnBook('${i.accn}')" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded shadow-sm text-xs">Return</button>
  </td>
  </tr>
  `;
  }).join('');
 
  card.innerHTML = `
- <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
-     <h2 class="text-sm font-bold text-blue-900 tracking-wider uppercase">
-         BOOK RETURN DESK
-     </h2>
-
-     <span class="text-xs text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
-         ${activeIssues.length} Awaiting Return
-     </span>
- </div>
-
- <div class="border border-gray-300 rounded-xl bg-white shadow-sm p-4 mb-3">
-     <div class="flex flex-col gap-2">
-         <label
-             for="grtReturnBookSearch"
-             class="text-xs font-bold text-gray-700"
-         >
-             Search Issued Book
-         </label>
-
-         <div class="flex flex-col sm:flex-row gap-2">
-             <input
-                 type="text"
-                 id="grtReturnBookSearch"
-                 placeholder="Search accession, title, member ID or member name..."
-                 class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"
-                 oninput="grtFilterReturnBooks()"
-                 autocomplete="off"
-             >
-
-             <button
-                 type="button"
-                 onclick="document.getElementById('grtReturnBookSearch').value=''; grtFilterReturnBooks(); document.getElementById('grtReturnBookSearch').focus();"
-                 class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-lg text-sm"
-             >
-                 Clear
-             </button>
-         </div>
-
-         <p class="text-[11px] text-gray-500">
-             Search using Accession No, Book Title, Member ID or Member Name.
-         </p>
-     </div>
- </div>
-
- <div
-     id="grtReturnNoSearchResults"
-     class="hidden border border-amber-200 bg-amber-50 text-amber-800 rounded-lg px-4 py-3 mb-3 text-sm font-semibold"
- >
-     No matching issued book found.
+ <div class="flex justify-between items-center mb-2">
+ <h2 class="text-sm font-bold text-blue-900 tracking-wider uppercase">BOOK RETURN DESK</h2>
+ <span class="text-xs text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">${activeIssues.length} Awaiting Return</span>
  </div>
 
  <div class="border border-gray-300 rounded bg-white shadow-sm overflow-hidden w-full max-w-5xl flex flex-col">
-     <table class="w-full text-left border-collapse text-[11px]">
-
-         <thead class="bg-gray-100 text-gray-700 uppercase border-b border-gray-300">
-             <tr>
-                 <th class="p-2 border-r">Accession</th>
-                 <th class="p-2 border-r">Title</th>
-                 <th class="p-2 border-r">Member ID</th>
-                 <th class="p-2 border-r">Member Name</th>
-                 <th class="p-2 border-r">Due Date</th>
-                 <th class="p-2 border-r">Overdue Status</th>
-                 <th class="p-2 text-center">Action</th>
-             </tr>
-         </thead>
-
-         <tbody id="grtReturnBookTableBody">
-             ${
-                 returnRows.length > 0
-                 ? returnRows
-                 : `<tr>
-                     <td colspan="7" class="text-center py-12 text-gray-400 italic">
-                         No issued books pending return!
-                     </td>
-                 </tr>`
-             }
-         </tbody>
-
-     </table>
+ <table class="w-full text-left border-collapse text-[11px]">
+ <thead class="bg-gray-100 text-gray-700 uppercase border-b border-gray-300">
+ <tr>
+ <th class="p-2 border-r">Accession</th>
+ <th class="p-2 border-r">Title</th>
+ <th class="p-2 border-r">Member ID</th>
+ <th class="p-2 border-r">Member Name</th>
+ <th class="p-2 border-r">Due Date</th>
+ <th class="p-2 border-r">Overdue Status</th>
+ <th class="p-2 text-center">Action</th>
+ </tr>
+ </thead>
+ <tbody>
+ ${returnRows.length > 0 ? returnRows : `<tr><td colspan="7" class="text-center py-12 text-gray-400 italic">No issued books pending return!</td></tr>`}
+ </tbody>
+ </table>
  </div>
  `;
  return;
-}
+ }
 
-if (title === 'Renewal') {
+ if (title === 'Renewal') {
  const activeIssues = dbIssues.filter(i => i.status === "Issued");
  const renewalRows = activeIssues.map(i => `
  <tr class="hover:bg-gray-50 border-b">
@@ -6077,6 +5766,45 @@ if (title === 'Fine Collection') {
  return;
  }
 
+ if (title === 'User Roles') {
+ const roleRows = systemUserRoles.map(u => `
+ <tr class="hover:bg-gray-50 border-b">
+ <td class="p-2 font-mono font-bold text-blue-900 border-r">${escapeHtml(u.account)}</td>
+ <td class="p-2 font-semibold border-r">${escapeHtml(u.role)}</td>
+ <td class="p-2 text-gray-700 border-r">${escapeHtml(u.privileges)}</td>
+ <td class="p-2 border-r"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${u.status === 'Active' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">${escapeHtml(u.status)}</span></td>
+ <td class="p-2 text-center">
+ <button onclick="editUserRole(${u.id})" class="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-600 hover:text-white rounded shadow-sm font-bold transition-all flex items-center gap-1.5 mx-auto">
+ <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+ Edit
+ </button>
+ </td>
+ </tr>
+ `).join('');
+
+ card.innerHTML = `
+ <div class="flex justify-between items-center mb-2">
+ <h2 class="text-sm font-bold text-blue-900 tracking-wider uppercase">ADMINISTRATION & SECURITY (USER ROLES)</h2>
+ </div>
+ <div class="border border-gray-300 rounded bg-white shadow-sm overflow-hidden w-full max-w-5xl p-4 space-y-3 text-xs">
+ <p class="text-gray-700 font-semibold">Manage system operator roles and permission matrices for library staff.</p>
+ <table class="w-full text-left border-collapse text-[11px] mt-2">
+ <thead class="bg-gray-100 uppercase border-b">
+ <tr>
+ <th class="p-2 border-r">User Account</th>
+ <th class="p-2 border-r">Assigned Role</th>
+ <th class="p-2 border-r">Privileges</th>
+ <th class="p-2 border-r">Status</th>
+ <th class="p-2 text-center">Action</th>
+ </tr>
+ </thead>
+ <tbody>${roleRows}</tbody>
+ </table>
+ </div>
+ `;
+ return;
+ }
+
  if (title === 'Database Backup') {
  card.innerHTML = `
  <div class="flex justify-between items-center mb-2">
@@ -6135,7 +5863,26 @@ if (title === 'Fine Collection') {
  return;
  }
 
- 
+ if (title === 'Audit Logs') {
+ card.innerHTML = `
+ <div class="flex justify-between items-center mb-2">
+ <h2 class="text-sm font-bold text-blue-900 tracking-wider uppercase">ADMINISTRATION & SECURITY (AUDIT LOGS)</h2>
+ </div>
+ <div class="border border-gray-300 rounded bg-white shadow-sm overflow-hidden w-full max-w-5xl p-4 space-y-3 text-xs">
+ <p class="text-gray-700 font-semibold">Review security event histories and administrative actions.</p>
+ <table class="w-full text-left border-collapse text-[11px] mt-2">
+ <thead class="bg-gray-100 uppercase">
+ <tr><th class="p-2 border-r">Timestamp</th><th class="p-2 border-r">User</th><th class="p-2 border-r">Action Performed</th><th class="p-2">IP Address</th></tr>
+ </thead>
+ <tbody>
+ <tr class="border-b"><td class="p-2 border-r font-mono">02 Oct 2026, 03:41 PM</td><td class="p-2 border-r font-bold">admin_grt</td><td class="p-2 border-r">Admin Gateway Successful Login</td><td class="p-2 font-mono">192.168.1.50</td></tr>
+ <tr class="border-b"><td class="p-2 border-r font-mono">01 Oct 2026, 10:15 AM</td><td class="p-2 border-r font-bold">librarian_01</td><td class="p-2 border-r">Book Issue Processed (CS1001)</td><td class="p-2 font-mono">192.168.1.52</td></tr>
+ </tbody>
+ </table>
+ </div>
+ `;
+ return;
+ }
  }
 
  /* --- HELP MODULE --- */

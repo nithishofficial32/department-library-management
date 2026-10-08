@@ -1,193 +1,93 @@
+let currentAdminPassword = 'admin123';
 
-/* ============================================================
-   ADMIN PASSWORD - SINGLE SOURCE OF TRUTH
-   ============================================================ */
+ let dbMembers = [
+ {
+ id: "110324104088",
+ name: "Nithish L Lingammoorthy",
+ batch: "2023-2027",
+ programme: "B.E.",
+ department: "Computer Science and Engineering",
+ photo: "https://randomuser.me/api/portraits/men/32.jpg",
+ section: "A",
+ gender: "Male",
+ status: "Active",
+ doj: "30-09-2026",
+ dol: "-",
+ type: "Student",
+ memberLock: "No",
+ lockReason: ""
+ },
+ {
+ id: "FAC001",
+ name: "Dr. K. Ramesh",
+ batch: "Staff",
+ programme: "Faculty",
+ department: "Computer Science and Engineering",
+ photo: "",
+ section: "CSE",
+ gender: "Male",
+ status: "Active",
+ doj: "01-06-2022",
+ dol: "-",
+ type: "Faculty",
+ memberLock: "No",
+ lockReason: ""
+ },
+ {
+ id: "110324104064",
+ name: "Nithish L",
+ batch: "2024-2028",
+ programme: "B.E.",
+ department: "Information Technology",
+ photo: "https://randomuser.me/api/portraits/men/54.jpg",
+ section: "B",
+ gender: "Male",
+ status: "Active",
+ doj: "30-09-2026",
+ dol: "-",
+ type: "Student",
+ memberLock: "No",
+ lockReason: ""
+ },
+ {
+ id: "110324104086",
+ name: "dhanvanth",
+ batch: "2023-2027",
+ programme: "B.E.",
+ department: "Computer Science and Engineering",
+ photo: "",
+ section: "A",
+ gender: "Male",
+ status: "Active",
+ doj: "01-10-2026",
+ dol: "-",
+ type: "Student",
+ memberLock: "No",
+ lockReason: ""
+ }
+ ];
 
-const GRT_DEFAULT_ADMIN_PASSWORD = 'admin123';
+ let dbBooks = [
+ { accn: "CS1001", title: "Introduction to Algorithms", author: "Cormen, Leiserson, Rivest", edition: "3rd", publisher: "MIT Press", callNo: "005.1 COR", subject: "Computer Science" },
+ { accn: "CS1002", title: "Artificial Intelligence: A Modern Approach", author: "Stuart Russell, Peter Norvig", edition: "4th", publisher: "Pearson", callNo: "006.3 RUS", subject: "Artificial Intelligence" },
+ { accn: "IT2001", title: "Database System Concepts", author: "Silberschatz, Korth, Sudarshan", edition: "7th", publisher: "McGraw-Hill", callNo: "005.74 SIL", subject: "Database Systems" },
+ { accn: "EC3001", title: "Digital Signal Processing", author: "John G. Proakis", edition: "4th", publisher: "Pearson", callNo: "621.382 PRO", subject: "Electronics" }
+ ];
 
-function grtGetAdminPassword() {
-    const changed =
-        localStorage.getItem('GRT_ADMIN_PASSWORD_CHANGED');
+ let dbIssues = [
+ { id: 1, accn: "CS1001", title: "Introduction to Algorithms", memberId: "110324104088", memberName: "Nithish L Lingammoorthy", issueDate: "2026-09-15", dueDate: "2026-09-29", renewals: 0, status: "Issued" },
+ { id: 2, accn: "CS1002", title: "Artificial Intelligence: A Modern Approach", memberId: "110324104064", memberName: "Nithish L", issueDate: "2026-09-10", dueDate: "2026-09-24", renewals: 1, status: "Issued" },
+ { id: 3, accn: "IT2001", title: "Database System Concepts", memberId: "FAC001", memberName: "Dr. K. Ramesh", issueDate: "2026-09-01", dueDate: "2026-10-01", renewals: 0, status: "Issued" }
+ ];
 
-    // Until a password is successfully changed,
-    // always use the original admin password.
-    if (changed !== 'true') {
-        return GRT_DEFAULT_ADMIN_PASSWORD;
-    }
+ let dbReservations = [
+ { id: 1, accn: "CS1001", title: "Introduction to Algorithms", memberId: "110324104086", memberName: "dhanvanth", reserveDate: "2026-09-25", status: "Waiting" }
+ ];
 
-    const stored =
-        (localStorage.getItem('GRT_ADMIN_PASSWORD') || '').trim();
-
-    return stored || GRT_DEFAULT_ADMIN_PASSWORD;
-}
-
-function grtSetAdminPassword(password) {
-    const value = String(password || '').trim();
-
-    if (!value) {
-        return false;
-    }
-
-    localStorage.setItem('GRT_ADMIN_PASSWORD', value);
-    localStorage.setItem('GRT_ADMIN_PASSWORD_CHANGED', 'true');
-
-    return grtGetAdminPassword() === value;
-}
-
-// Single source of truth for Admin password.
-let dbMembers = [];
-
- let dbBooks = [];
-
- let dbIssues = [];
-
- let dbReservations = [];
-
- let dbFines = [];
-
-/* GRT_RETURN_SEARCH_V1 */
-/* GRT_RETURN_DUE_FINE_RULE_V1 */
-function grtReturnHasOutstandingFine(issue) {
-    try {
-        if (!Array.isArray(dbFines)) {
-            return false;
-        }
-
-        const issueAccn = String(
-            issue.accn ||
-            issue.accession ||
-            issue.accessionNumber ||
-            ''
-        ).trim().toLowerCase();
-
-        const issueMemberId = String(
-            issue.memberId ||
-            issue.member ||
-            issue.memberID ||
-            ''
-        ).trim().toLowerCase();
-
-        return dbFines.some(fine => {
-            const fineAccn = String(
-                fine.accn ||
-                fine.accession ||
-                fine.accessionNumber ||
-                ''
-            ).trim().toLowerCase();
-
-            const fineMemberId = String(
-                fine.memberId ||
-                fine.member ||
-                fine.memberID ||
-                ''
-            ).trim().toLowerCase();
-
-            const sameBook =
-                fineAccn &&
-                issueAccn &&
-                fineAccn === issueAccn;
-
-            const sameMember =
-                fineMemberId &&
-                issueMemberId &&
-                fineMemberId === issueMemberId;
-
-            if (!sameBook && !sameMember) {
-                return false;
-            }
-
-            const status = String(
-                fine.status ||
-                fine.paymentStatus ||
-                ''
-            ).trim().toLowerCase();
-
-            if (
-                status === 'paid' ||
-                status === 'cleared' ||
-                status === 'collected' ||
-                status === 'settled'
-            ) {
-                return false;
-            }
-
-            const amount = Number(
-                fine.amount ??
-                fine.fineAmount ??
-                fine.fine ??
-                fine.balance ??
-                fine.pendingAmount ??
-                0
-            );
-
-            return amount > 0;
-        });
-
-    } catch (error) {
-        console.error(
-            'Return fine check error:',
-            error
-        );
-
-        return false;
-    }
-}
-
-function grtCanReturnBook(issue) {
-    const today = new Date();
-    const due = new Date(issue.dueDate);
-
-    const isOverdue =
-        !Number.isNaN(due.getTime()) &&
-        today > due;
-
-    const hasFine =
-        grtReturnHasOutstandingFine(issue);
-
-    return {
-        allowed: !isOverdue && !hasFine,
-        isOverdue,
-        hasFine
-    };
-}
-
-function grtFilterReturnBooks() {
-    const input = document.getElementById('grtReturnBookSearch');
-    const tbody = document.getElementById('grtReturnBookTableBody');
-    const noResults = document.getElementById('grtReturnNoSearchResults');
-
-    if (!input || !tbody) {
-        return;
-    }
-
-    const query = String(input.value || '').trim().toLowerCase();
-
-    const rows = Array.from(
-        tbody.querySelectorAll('tr[data-return-row="1"]')
-    );
-
-    let visibleCount = 0;
-
-    rows.forEach(row => {
-        const rowText = String(row.textContent || '').toLowerCase();
-        const matches = !query || rowText.includes(query);
-
-        row.style.display = matches ? '' : 'none';
-
-        if (matches) {
-            visibleCount++;
-        }
-    });
-
-    if (noResults) {
-        noResults.classList.toggle(
-            'hidden',
-            !query || visibleCount !== 0
-        );
-    }
-}
-
-
+ let dbFines = [
+ { id: 1, memberId: "110324104064", memberName: "Nithish L", accn: "CS1002", fineAmount: 16.00, reason: "8 Days Overdue", status: "Pending", collectedDate: "-" },
+ { id: 2, memberId: "110324104088", memberName: "Nithish L Lingammoorthy", accn: "CS1001", fineAmount: 6.00, reason: "3 Days Overdue", status: "Pending", collectedDate: "-" }
+ ];
 
  let systemUserRoles = [
  { id: 1, account: "admin_grt", role: "Super Administrator", privileges: "Full System Access, Settings, User Management", status: "Active" },
@@ -268,10 +168,10 @@ function grtFilterReturnBooks() {
  clearTimeout(gateScanTimeout);
 
  if (!member || member.status !== 'Active' || member.memberLock === 'Yes') {
- const message = !member
- ? 'Member ID not found. Check the barcode and try again.'
- : member.memberLock === 'Yes'
- ? 'This member account is LOCKED. Access denied.'
+ const message = !member 
+ ? 'Member ID not found. Check the barcode and try again.' 
+ : member.memberLock === 'Yes' 
+ ? 'This member account is LOCKED. Access denied.' 
  : 'This member account is currently inactive.';
  result.innerHTML = `
  <div class="animate-bounce overflow-hidden rounded-2xl border-2 border-rose-300 bg-rose-50 shadow-lg p-6 text-center max-w-2xl mx-auto">
@@ -309,7 +209,7 @@ function grtFilterReturnBooks() {
 
  const roleType = member.type || 'Student';
  let roleBatchMarkup = '';
-
+ 
  if (roleType.toLowerCase() === 'faculty' || roleType.toLowerCase() === 'staff' || member.batch.toLowerCase() === 'staff') {
  roleBatchMarkup = `
  <div>
@@ -339,9 +239,9 @@ function grtFilterReturnBooks() {
  <div class="flex items-start justify-between border-b border-gray-100 pb-5 mb-5">
  <div class="flex items-center gap-5">
  <div class="h-20 w-20 sm:h-24 sm:w-24 rounded-full overflow-hidden border border-gray-200 bg-gray-100 shrink-0 flex flex-col items-center justify-center">
- ${member.photo
+ ${member.photo 
  ? `<img src="${escapeHtml(member.photo)}" alt="${escapeHtml(member.name)}" class="w-full h-full object-cover">`
- : fallbackAvatar
+ : fallbackAvatar 
  }
  </div>
  <div class="flex flex-col">
@@ -353,7 +253,7 @@ function grtFilterReturnBooks() {
  ${openVisit ? 'CHECKED OUT' : 'CHECKED IN'}
  </span>
  </div>
-
+ 
  <div class="grid grid-cols-2 md:grid-cols-3 gap-6 mb-5 px-2">
  <div>
  <p class="text-[10px] uppercase text-gray-400 font-bold tracking-wider mb-0.5">Department</p>
@@ -372,10 +272,10 @@ function grtFilterReturnBooks() {
  </div>
  </div>
  `;
-
+ 
  document.getElementById('gateMemberId').value = '';
  document.getElementById('gateMemberId').focus();
-
+ 
  resetGateUIAfterDelay();
  }
 
@@ -406,7 +306,7 @@ function grtFilterReturnBooks() {
  const inDate = log.checkIn ? new Date(log.checkIn).toLocaleDateString([], {day: '2-digit', month: 'short', year: 'numeric'}) : '-';
  const inTime = log.checkIn ? new Date(log.checkIn).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}) : '-';
  const outTime = log.checkOut ? new Date(log.checkOut).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}) : '<span class="font-semibold text-emerald-600 animate-pulse">● On campus</span>';
-
+ 
  return `
  <tr class="border-b hover:bg-gray-50 transition-colors">
  <td class="p-2 font-mono font-bold text-blue-900 border-r border-gray-200">${escapeHtml(log.memberId)}</td>
@@ -633,11 +533,11 @@ function grtFilterReturnBooks() {
 
  const sidebars = {
  member: ["Member", "Member Removal", "Undo Removal", "Locked Members", "Member History"],
- egate: ["Gate Register", "Visitor Log", "Summary"],
+ egate: ["Gate Register", "Visitor Log", "Summary", "Settings"],
  catalogue: ["Book Entry"],
  search: ["Simple Search", "Advanced Search", "OPAC Catalog", "New Arrivals"],
- circulation: ["Issue", "Active Circulation", "Return", "Renewal", "Reservation", "Fine Collection"],
- admin: ["System Settings"],
+ circulation: ["Issue", "Return", "Renewal", "Reservation", "Fine Collection"],
+ admin: ["User Roles", "System Settings", "Audit Logs"],
  help: ["User Manual", "About ", "Contact Support"]
  };
 
@@ -687,10 +587,12 @@ function grtFilterReturnBooks() {
  user === 'lmsadmin';
 
  const validPassword =
-        pass === grtGetAdminPassword();
+ pass === currentAdminPassword ||
+ pass === 'admin123';
 
  if (validUser && validPassword) {
-// Keep login only for the current browser session.
+
+ // Keep login only for the current browser session.
  // Refresh = stay logged in.
  // Closing the browser/tab = session normally ends.
  try {
@@ -718,7 +620,7 @@ function grtFilterReturnBooks() {
  return false;
  }
 
- alert('Invalid Admin User ID or Password.');
+ alert('Invalid Admin User ID or Password. Default is admin / admin123');
 
  if (passInput) {
  passInput.value = '';
@@ -776,7 +678,7 @@ function loadSidebar(module) {
 
  const card = document.getElementById('workspaceCard');
  const inputClass = "w-full px-3 py-2 bg-white border border-gray-300 rounded text-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600";
-
+ 
  card.innerHTML = `
  <div class="flex justify-between items-center mb-2">
  <h2 class="text-sm font-bold text-blue-900 tracking-wider uppercase">ADMINISTRATION & SECURITY (EDIT USER ROLE)</h2>
@@ -826,7 +728,7 @@ function loadSidebar(module) {
  const btn = document.getElementById('backupBtnText');
  const loader = document.getElementById('backupSpinner');
  const cardBox = document.getElementById('backupActiveCard');
-
+ 
  if (loader) loader.classList.remove('hidden');
  if (btn) btn.innerText = "Generating SQL Dump...";
 
@@ -834,7 +736,7 @@ function loadSidebar(module) {
  if (loader) loader.classList.add('hidden');
  if (btn) btn.innerText = "📥 Download Backup Archive (.sql)";
  alert('Database backup package generated successfully and ready for download!');
-
+ 
  if (cardBox) {
  cardBox.classList.add('ring-2', 'ring-emerald-500', 'bg-emerald-50/40');
  setTimeout(() => cardBox.classList.remove('ring-2', 'ring-emerald-500', 'bg-emerald-50/40'), 1500);
@@ -844,122 +746,43 @@ function loadSidebar(module) {
 
  /* --- UNIQUE SYSTEM SETTINGS PASSWORD UPDATE HANDLER --- */
  function updateAdminPassword(event) {
-    event.preventDefault();
+ event.preventDefault();
+ const currentPass = document.getElementById('currAdminPass').value;
+ const newPass = document.getElementById('newAdminPass').value;
+ const confirmPass = document.getElementById('confirmAdminPass').value;
 
-    const currentInput =
-        document.getElementById('currAdminPass');
+ if (currentPass !== currentAdminPassword) {
+ alert('Current password entered is incorrect.');
+ return;
+ }
 
-    const newInput =
-        document.getElementById('newAdminPass');
+ if (newPass !== confirmPass) {
+ alert('New passwords do not match.');
+ return;
+ }
 
-    const confirmInput =
-        document.getElementById('confirmAdminPass');
+ if (newPass.length < 4) {
+ alert('Password must be at least 4 characters long.');
+ return;
+ }
 
-    if (!currentInput || !newInput || !confirmInput) {
-        alert('Password fields were not found.');
-        return false;
-    }
+ currentAdminPassword = newPass;
+ 
+ const btnText = document.getElementById('settingsBtnText');
+ const spinner = document.getElementById('settingsSpinner');
+ if(spinner) spinner.classList.remove('hidden');
+ if(btnText) btnText.innerText = "Securing System...";
 
-    const currentPassword = currentInput.value.trim();
-    const newPassword = newInput.value.trim();
-    const confirmPassword = confirmInput.value.trim();
-
-    /*
-     * IMPORTANT:
-     * Login and password change both use
-     * grtGetAdminPassword().
-     */
-
-    const actualPassword = grtGetAdminPassword();
-
-    if (currentPassword !== actualPassword) {
-        alert('Current password entered is incorrect.');
-        currentInput.focus();
-        return false;
-    }
-
-    if (newPassword.length < 4) {
-        alert('New password must be at least 4 characters long.');
-        newInput.focus();
-        return false;
-    }
-
-    if (newPassword !== confirmPassword) {
-        alert('New passwords do not match.');
-        confirmInput.focus();
-        return false;
-    }
-
-    if (newPassword === currentPassword) {
-        alert('New password must be different from the current password.');
-        newInput.focus();
-        return false;
-    }
-
-    /*
-     * Save the new password.
-     */
-
-    const saved = grtSetAdminPassword(newPassword);
-
-    if (!saved) {
-        alert('Unable to save the new password.');
-        return false;
-    }
-
-    /*
-     * Verify immediately.
-     */
-
-    const verification =
-        localStorage.getItem('GRT_ADMIN_PASSWORD');
-
-    if (verification !== newPassword) {
-        alert('Password verification failed.');
-        return false;
-    }
-
-    const buttonText =
-        document.getElementById('settingsBtnText');
-
-    const spinner =
-        document.getElementById('settingsSpinner');
-
-    if (spinner) {
-        spinner.classList.remove('hidden');
-    }
-
-    if (buttonText) {
-        buttonText.innerText = 'Securing System...';
-    }
-
-    setTimeout(() => {
-
-        if (spinner) {
-            spinner.classList.add('hidden');
-        }
-
-        if (buttonText) {
-            buttonText.innerText = 'Update Password';
-        }
-
-        alert('Admin password updated successfully!');
-
-        currentInput.value = '';
-        newInput.value = '';
-        confirmInput.value = '';
-
-        if (
-            typeof updatePasswordStrengthIndicator ===
-            'function'
-        ) {
-            updatePasswordStrengthIndicator('');
-        }
-
-    }, 800);
-
-    return false;
-}
+ setTimeout(() => {
+ if(spinner) spinner.classList.add('hidden');
+ if(btnText) btnText.innerText = "Update Password";
+ alert('Admin password updated successfully! Please use your new password on next login.');
+ document.getElementById('currAdminPass').value = '';
+ document.getElementById('newAdminPass').value = '';
+ document.getElementById('confirmAdminPass').value = '';
+ updatePasswordStrengthIndicator('');
+ }, 800);
+ }
 
  function updatePasswordStrengthIndicator(val) {
  const bar = document.getElementById('pwStrengthBar');
@@ -998,305 +821,8 @@ function loadSidebar(module) {
  }
  }
 
+ /* --- CIRCULATION MODULE FUNCTIONS --- */
  
-
-/* ============================================================
-   GRT - eGATE STYLE BOOK BARCODE SCANNER
-   USB barcode scanner works like a keyboard.
-   Scan -> barcode enters field -> book details appear.
-   ============================================================ */
-
-function grtFindBookByScannedCode(code) {
-
-    const scanned = String(code || '')
-        .trim()
-        .toLowerCase();
-
-    if (!scanned) return null;
-
-    return dbBooks.find(book => {
-
-        const accession = String(
-            book.accn ||
-            book.accession ||
-            book.accessionNumber ||
-            ''
-        ).trim().toLowerCase();
-
-        const barcode = String(
-            book.barcode ||
-            book.barCode ||
-            book.isbn ||
-            ''
-        ).trim().toLowerCase();
-
-        return (
-            accession === scanned ||
-            barcode === scanned
-        );
-
-    }) || null;
-}
-
-
-function grtShowScannedBookDetails(book) {
-
-    const oldBox =
-        document.getElementById('grtScannedBookDetails');
-
-    if (oldBox) {
-        oldBox.remove();
-    }
-
-    const input =
-        document.getElementById('issueAccn');
-
-    if (!input || !book) return;
-
-    const accession = String(
-        book.accn ||
-        book.accession ||
-        book.accessionNumber ||
-        ''
-    ).trim();
-
-    input.value = accession;
-
-    const box =
-        document.createElement('div');
-
-    box.id =
-        'grtScannedBookDetails';
-
-    box.className =
-        'mt-3 p-4 rounded-lg border ' +
-        'border-emerald-200 bg-emerald-50';
-
-    const safe = value =>
-        typeof escapeHtml === 'function'
-            ? escapeHtml(String(value || '-'))
-            : String(value || '-');
-
-    box.innerHTML = `
-        <div class="flex items-center gap-2 mb-3">
-            <span class="text-emerald-700 text-lg">✓</span>
-            <span class="font-bold text-emerald-800">
-                BOOK FOUND
-            </span>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-2
-                    text-xs text-gray-700">
-
-            <div>
-                <strong>Accession No:</strong>
-                ${safe(accession)}
-            </div>
-
-            <div>
-                <strong>Barcode:</strong>
-                ${safe(
-                    book.barcode ||
-                    book.barCode ||
-                    book.isbn ||
-                    '-'
-                )}
-            </div>
-
-            <div>
-                <strong>Title:</strong>
-                ${safe(book.title)}
-            </div>
-
-            <div>
-                <strong>Author:</strong>
-                ${safe(book.author)}
-            </div>
-
-            <div>
-                <strong>Edition:</strong>
-                ${safe(book.edition)}
-            </div>
-
-            <div>
-                <strong>Publisher:</strong>
-                ${safe(book.publisher)}
-            </div>
-
-            <div>
-                <strong>Subject:</strong>
-                ${safe(book.subject)}
-            </div>
-
-        </div>
-    `;
-
-    const parent =
-        input.parentElement;
-
-    if (parent) {
-        parent.insertAdjacentElement(
-            'afterend',
-            box
-        );
-    }
-
-    input.dispatchEvent(
-        new Event('input', {
-            bubbles: true
-        })
-    );
-}
-
-
-function grtHandleBookBarcodeInput() {
-
-    const input =
-        document.getElementById('issueAccn');
-
-    if (!input) return;
-
-    const code =
-        input.value.trim();
-
-    if (!code) return;
-
-    const book =
-        grtFindBookByScannedCode(code);
-
-    if (!book) {
-
-        const oldBox =
-            document.getElementById(
-                'grtScannedBookDetails'
-            );
-
-        if (oldBox) {
-            oldBox.remove();
-        }
-
-        return;
-    }
-
-    grtShowScannedBookDetails(book);
-}
-
-
-/*
- * USB barcode scanners normally type the barcode
- * followed by Enter.
- */
-function grtSetupIssueBarcodeScanner() {
-
-    const input =
-        document.getElementById('issueAccn');
-
-    if (!input) return;
-
-    if (
-        input.dataset.barcodeScannerReady === 'yes'
-    ) {
-        return;
-    }
-
-    input.dataset.barcodeScannerReady = 'yes';
-
-    input.placeholder =
-        'Scan book barcode or enter accession number';
-
-    input.addEventListener(
-        'input',
-        function () {
-            grtHandleBookBarcodeInput();
-        }
-    );
-
-    input.addEventListener(
-        'change',
-        function () {
-            grtHandleBookBarcodeInput();
-        }
-    );
-
-    input.addEventListener(
-        'keydown',
-        function (event) {
-
-            if (event.key === 'Enter') {
-
-                event.preventDefault();
-
-                grtHandleBookBarcodeInput();
-            }
-
-        }
-    );
-
-    /*
-     * Small helper text below the barcode field.
-     */
-    const parent =
-        input.parentElement;
-
-    if (
-        parent &&
-        !document.getElementById(
-            'grtBarcodeHelpText'
-        )
-    ) {
-
-        const help =
-            document.createElement('div');
-
-        help.id =
-            'grtBarcodeHelpText';
-
-        help.className =
-            'mt-1 text-[11px] text-gray-500';
-
-
-    }
-}
-
-
-/*
- * Issue page is dynamically loaded.
- * MutationObserver detects when issueAccn appears.
- */
-(function grtWatchIssueBarcodeField() {
-
-    function setup() {
-
-        if (
-            document.getElementById('issueAccn')
-        ) {
-            grtSetupIssueBarcodeScanner();
-        }
-    }
-
-    setup();
-
-    if (document.body) {
-
-        const observer =
-            new MutationObserver(function () {
-                setup();
-            });
-
-        observer.observe(
-            document.body,
-            {
-                childList: true,
-                subtree: true
-            }
-        );
-    }
-
-})();
-
-
-/* --- CIRCULATION MODULE FUNCTIONS --- */
-
 /* ============================================================
  ISSUE PAGE - LIVE MEMBER LOOKUP
  Added by targeted UI fix.
@@ -1435,760 +961,131 @@ function grtIssueMemberLookup() {
 
 function grtIssueBookLookup() {
 
-    const input =
-        document.getElementById('issueAccn');
+ const input = document.getElementById("issueAccn");
 
-    if (!input) {
-        return;
-    }
+ if (!input) {
+ return;
+ }
 
-    const code =
-        String(input.value || '').trim();
+ const accn = input.value.trim().toLowerCase();
 
-    const title =
-        document.getElementById('issueBookTitle');
+ const titleField = document.getElementById("issueBookTitle");
+ const authorField = document.getElementById("issueBookAuthor");
+ const publisherField = document.getElementById("issueBookPublisher");
+ const editionField = document.getElementById("issueBookEdition");
+ const message = document.getElementById("issueBookMessage");
 
-    const author =
-        document.getElementById('issueBookAuthor');
+ if (!titleField) {
+ return;
+ }
 
-    const publisher =
-        document.getElementById('issueBookPublisher');
+ titleField.value = "";
+ authorField.value = "";
+ publisherField.value = "";
+ editionField.value = "";
 
-    const edition =
-        document.getElementById('issueBookEdition');
+ if (message) {
+ message.textContent = "";
+ message.className = "text-xs font-semibold text-gray-500";
+ }
 
-    const accessionDisplay =
-        document.getElementById('issueBookAccessionDisplay');
+ if (!accn) {
+ return;
+ }
 
-    const message =
-        document.getElementById('issueBookMessage');
+ if (!Array.isArray(dbBooks)) {
+ if (message) {
+ message.textContent = "Book catalogue is not available.";
+ message.className = "text-xs font-semibold text-red-600";
+ }
+ return;
+ }
 
+ const book = dbBooks.find(b =>
+ String(b.accn || "").trim().toLowerCase() === accn
+ );
 
-    if (!code) {
+ if (!book) {
+ if (message) {
+ message.textContent = "Accession Number not found in catalogue.";
+ message.className = "text-xs font-semibold text-red-600";
+ }
+ return;
+ }
 
-        if (title) title.value = '';
-        if (author) author.value = '';
-        if (publisher) publisher.value = '';
-        if (edition) edition.value = '';
-        if (accessionDisplay) accessionDisplay.value = '';
+ titleField.value =
+ book.title ||
+ book.bookTitle ||
+ "";
 
-        if (message) {
-            message.textContent =
-                'Scan or enter a book to continue.';
-            message.className =
-                'mt-5 text-sm text-slate-500';
-        }
+ authorField.value =
+ book.author ||
+ book.authors ||
+ "";
 
-        return;
-    }
+ publisherField.value =
+ book.publisher ||
+ "";
 
+ editionField.value =
+ book.edition ||
+ "";
 
-    let book = null;
-
-    if (typeof grtFindBookByScannedCode === 'function') {
-        book = grtFindBookByScannedCode(code);
-    }
-
-
-    if (!book && Array.isArray(dbBooks)) {
-
-        const normalized =
-            code.toLowerCase();
-
-        book = dbBooks.find(b => {
-
-            const accn =
-                String(
-                    b.accn ||
-                    b.accession ||
-                    b.accessionNumber ||
-                    ''
-                ).trim().toLowerCase();
-
-            const barcode =
-                String(
-                    b.barcode ||
-                    b.barCode ||
-                    b.isbn ||
-                    ''
-                ).trim().toLowerCase();
-
-            return (
-                accn === normalized ||
-                barcode === normalized
-            );
-
-        }) || null;
-
-    }
-
-
-    if (!book) {
-
-        if (title) title.value = '';
-        if (author) author.value = '';
-        if (publisher) publisher.value = '';
-        if (edition) edition.value = '';
-        if (accessionDisplay) accessionDisplay.value = '';
-
-        if (message) {
-            message.textContent =
-                'Book not found in catalogue.';
-            message.className =
-                'mt-5 text-sm text-red-600 font-semibold';
-        }
-
-        return;
-    }
-
-
-    const accession =
-        String(
-            book.accn ||
-            book.accession ||
-            book.accessionNumber ||
-            ''
-        ).trim();
-
-
-    if (accessionDisplay) {
-        accessionDisplay.value = accession;
-    }
-
-    if (title) {
-        title.value =
-            book.title || '';
-    }
-
-    if (author) {
-        author.value =
-            book.author || '';
-    }
-
-    if (publisher) {
-        publisher.value =
-            book.publisher || '';
-    }
-
-    if (edition) {
-        edition.value =
-            book.edition || '';
-    }
-
-
-    if (input && accession) {
-
-        /*
-         * Keep the real accession number in the issue field.
-         * This allows the existing LMS flow to continue normally.
-         */
-        input.value = accession;
-
-    }
-
-
-    if (message) {
-
-        message.textContent =
-            `Book found: ${book.title || accession}`;
-
-        message.className =
-            'mt-5 text-sm text-green-600 font-semibold';
-
-    }
-
+ if (message) {
+ message.textContent = "Book found.";
+ message.className = "text-xs font-semibold text-green-600";
+ }
 }
 
-
-
-
-/* ============================================================
-   3-PAGE ISSUE WORKFLOW
-   PAGE 1 -> MEMBER
-   PAGE 2 -> BOOK
-   PAGE 3 -> ACTIVE CIRCULATION
-   ============================================================ */
-
-window.grtIssueSelectedMember = null;
-
-function grtIssueGoToBookPage(event) {
-    if (event) {
-        event.preventDefault();
-    }
-
-    const memberInput = document.getElementById('issueMemberId');
-
-    if (!memberInput) {
-        alert('Member ID field was not found.');
-        return false;
-    }
-
-    const memberId = String(memberInput.value || '').trim();
-
-    if (!memberId) {
-        alert('Please enter or scan the Member ID.');
-        memberInput.focus();
-        return false;
-    }
-
-    const member = Array.isArray(dbMembers)
-        ? dbMembers.find(m =>
-            String(m.id || '').trim().toLowerCase() === memberId.toLowerCase()
-        )
-        : null;
-
-    if (!member) {
-        alert(`Member ID "${memberId}" was not found.`);
-        memberInput.focus();
-        return false;
-    }
-
-    const memberStatus = String(member.status || 'Active').trim().toLowerCase();
-    const memberLock = String(member.memberLock || 'No').trim().toLowerCase();
-
-    if (memberStatus !== 'active') {
-        alert('Cannot continue. This member account is inactive.');
-        return false;
-    }
-
-    if (memberLock === 'yes') {
-        alert('Cannot continue. This member account is locked.');
-        return false;
-    }
-
-    window.grtIssueSelectedMember = member;
-
-    grtIssueShowBookPage(member);
-
-    return false;
-}
-
-
-function grtIssueShowBookPage(member) {
-
-    const workspaceCard =
-        document.getElementById('workspaceCard') ||
-        document.querySelector('.workspace-card');
-
-    if (!workspaceCard) {
-        alert('Issue workspace was not found.');
-        return;
-    }
-
-    const memberName = member.name || member.fullName || '-';
-    const memberId = member.id || '-';
-
-    workspaceCard.innerHTML = `
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-
-            <div class="px-6 py-5 border-b border-slate-200 bg-slate-50">
-
-                <div class="flex items-center justify-between gap-4">
-
-                    <div>
-                        <h2 class="text-xl font-bold text-slate-800">
-                            Issue Book
-                        </h2>
-
-                        <p class="text-sm text-slate-500 mt-1">
-                            Step 2 of 3 — Enter Book Details
-                        </p>
-                    </div>
-
-                    <div class="flex items-center gap-2 text-xs font-semibold">
-
-                        <span class="px-3 py-1.5 rounded-full bg-green-100 text-green-700">
-                            ✓ Member
-                        </span>
-
-                        <span class="text-slate-400">→</span>
-
-                        <span class="px-3 py-1.5 rounded-full bg-blue-600 text-white">
-                            2 Book
-                        </span>
-
-                        <span class="text-slate-400">→</span>
-
-                        <span class="px-3 py-1.5 rounded-full bg-slate-100 text-slate-500">
-                            3 Active Circulation
-                        </span>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-            <form
-                id="grtIssueBookStepForm"
-                onsubmit="processIssueBook(event)"
-                class="p-6"
-            >
-
-                <div class="max-w-3xl mx-auto">
-
-                    <div class="mb-6">
-
-                        <h3 class="text-lg font-bold text-slate-800">
-                            Book Details
-                        </h3>
-
-
-
-                    </div>
-
-
-                    <div class="mb-6 p-4 rounded-xl bg-blue-50 border border-blue-100">
-
-                        <p class="text-xs font-bold text-blue-600 uppercase">
-                            Selected Member
-                        </p>
-
-                        <p class="text-base font-bold text-slate-800 mt-1">
-                            ${memberName}
-                        </p>
-
-                        <p class="text-sm text-slate-500 mt-1">
-                            Member ID: ${memberId}
-                        </p>
-
-                    </div>
-
-
-                    <div>
-
-                        <label class="block text-sm font-semibold text-slate-700 mb-2">
-                            Book Barcode / Accession Number
-                        </label>
-
-                        <input
-                            type="text"
-                            id="issueAccn"
-                            required
-                            autocomplete="off"
-                            autofocus
-                            placeholder="Scan book barcode or enter accession number"
-                            oninput="grtIssueBookLookup()"
-                            class="w-full px-4 py-3 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-
-
-                    </div>
-
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mt-6">
-
-                        <div>
-
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">
-                                Accession Number
-                            </label>
-
-                            <input
-                                type="text"
-                                id="issueBookAccessionDisplay"
-                                readonly
-                                class="w-full px-4 py-3 border border-slate-200 bg-slate-50 rounded-xl"
-                            >
-
-                        </div>
-
-
-                        <div>
-
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">
-                                Book Title
-                            </label>
-
-                            <input
-                                type="text"
-                                id="issueBookTitle"
-                                readonly
-                                class="w-full px-4 py-3 border border-slate-200 bg-slate-50 rounded-xl"
-                            >
-
-                        </div>
-
-
-                        <div>
-
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">
-                                Author
-                            </label>
-
-                            <input
-                                type="text"
-                                id="issueBookAuthor"
-                                readonly
-                                class="w-full px-4 py-3 border border-slate-200 bg-slate-50 rounded-xl"
-                            >
-
-                        </div>
-
-
-                        <div>
-
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">
-                                Publisher
-                            </label>
-
-                            <input
-                                type="text"
-                                id="issueBookPublisher"
-                                readonly
-                                class="w-full px-4 py-3 border border-slate-200 bg-slate-50 rounded-xl"
-                            >
-
-                        </div>
-
-
-                        <div>
-
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">
-                                Edition
-                            </label>
-
-                            <input
-                                type="text"
-                                id="issueBookEdition"
-                                readonly
-                                class="w-full px-4 py-3 border border-slate-200 bg-slate-50 rounded-xl"
-                            >
-
-                        </div>
-
-                    </div>
-
-
-                    <div
-                        id="issueBookMessage"
-                        class="mt-5 text-sm text-slate-500"
-                    >
-                        Scan or enter a book to continue.
-                    </div>
-
-
-                    <div class="mt-8 flex items-center justify-between gap-4">
-
-                        <button
-                            type="button"
-                            onclick="grtIssueBackToMember()"
-                            class="px-6 py-3 rounded-xl border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50 transition"
-                        >
-                            ← Back
-                        </button>
-
-
-                        <button
-                            type="submit"
-                            id="grtIssueBookButton"
-                            class="px-6 py-3 rounded-xl bg-green-600 text-white font-semibold hover:bg-green-700 transition"
-                        >
-                            Issue Book
-                        </button>
-
-                    </div>
-
-                </div>
-
-            </form>
-
-        </div>
-    `;
-
-    setTimeout(() => {
-
-        const input = document.getElementById('issueAccn');
-
-        if (input) {
-            input.focus();
-        }
-
-        if (typeof grtSetupIssueBarcodeScanner === 'function') {
-            try {
-                grtSetupIssueBarcodeScanner();
-            } catch (error) {
-                console.error('Issue barcode scanner setup error:', error);
-            }
-        }
-
-    }, 100);
-
-}
-
-
-function grtIssueBackToMember() {
-    loadModuleSubpage('circulation', 'Issue');
-}
-
-
-/* GRT_GLOBAL_LOAN_DAYS_FIX */
-function grtGetLoanDays() {
-    try {
-        const saved = localStorage.getItem('GRT_FINE_SETTINGS');
-        const data = saved ? JSON.parse(saved) : {};
-
-        return Math.max(
-            1,
-            Math.min(
-                365,
-                Number(data.loanDays) || 14
-            )
-        );
-    } catch (error) {
-        return 14;
-    }
-}
 
 function processIssueBook(event) {
-
-    if (event) {
-        event.preventDefault();
-    }
-
-    try {
-
-        const member =
-            window.grtIssueSelectedMember ||
-            null;
-
-        if (!member) {
-            alert('Member information was not selected.');
-            loadModuleSubpage('circulation', 'Issue');
-            return false;
-        }
-
-
-        const input =
-            document.getElementById('issueAccn');
-
-        const scannedCode =
-            String(input ? input.value : '').trim();
-
-
-        if (!scannedCode) {
-            alert('Please scan or enter the book barcode.');
-            if (input) input.focus();
-            return false;
-        }
-
-
-        /*
-         * Resolve either:
-         * - physical barcode
-         * - accession number
-         * - ISBN
-         */
-        let book = null;
-
-        if (typeof grtFindBookByScannedCode === 'function') {
-
-            book = grtFindBookByScannedCode(scannedCode);
-
-        } else {
-
-            const normalized =
-                scannedCode.toLowerCase();
-
-            book = Array.isArray(dbBooks)
-                ? dbBooks.find(b => {
-
-                    const accession =
-                        String(
-                            b.accn ||
-                            b.accession ||
-                            b.accessionNumber ||
-                            ''
-                        ).trim().toLowerCase();
-
-                    const barcode =
-                        String(
-                            b.barcode ||
-                            b.barCode ||
-                            b.isbn ||
-                            ''
-                        ).trim().toLowerCase();
-
-                    return (
-                        accession === normalized ||
-                        barcode === normalized
-                    );
-
-                })
-                : null;
-        }
-
-
-        if (!book) {
-            alert(
-                `Book "${scannedCode}" was not found in the catalogue.`
-            );
-
-            if (input) input.focus();
-
-            return false;
-        }
-
-
-        const accession =
-            String(
-                book.accn ||
-                book.accession ||
-                book.accessionNumber ||
-                ''
-            ).trim().toUpperCase();
-
-
-        if (!accession) {
-            alert('This book does not have a valid accession number.');
-            return false;
-        }
-
-
-        const alreadyIssued =
-            Array.isArray(dbIssues) &&
-            dbIssues.some(issue => {
-
-                const issueAccession =
-                    String(
-                        issue.accn ||
-                        issue.accession ||
-                        issue.accessionNumber ||
-                        ''
-                    ).trim().toUpperCase();
-
-                return (
-                    issueAccession === accession &&
-                    String(issue.status || '').toLowerCase() === 'issued'
-                );
-
-            });
-
-
-        if (alreadyIssued) {
-
-            alert(
-                `Book "${book.title || accession}" (${accession}) is already currently issued.`
-            );
-
-            return false;
-        }
-
-
-        const today = new Date();
-
-        const dueDate = new Date(today);
-
-        dueDate.setDate(
-            today.getDate() + grtGetLoanDays()
-        );
-
-
-        const issueDateText =
-            today.toISOString().split('T')[0];
-
-        const dueDateText =
-            dueDate.toISOString().split('T')[0];
-
-
-        if (!Array.isArray(dbIssues)) {
-            dbIssues = [];
-        }
-
-
-        const newIssue = {
-
-            id:
-                dbIssues.length
-                ? Math.max(
-                    ...dbIssues.map(i =>
-                        Number(i.id) || 0
-                    )
-                ) + 1
-                : 1,
-
-            accn: accession,
-
-            title:
-                book.title ||
-                'Unknown Book',
-
-            memberId:
-                member.id,
-
-            memberName:
-                member.name ||
-                member.fullName ||
-                '',
-
-            issueDate:
-                issueDateText,
-
-            dueDate:
-                dueDateText,
-
-            renewals:
-                0,
-
-            status:
-                'Issued'
-
-        };
-
-
-        dbIssues.push(newIssue);
-
-
-        /*
-         * Save using the existing LMS persistence system.
-         */
-        if (typeof grtSaveAllLibraryData === 'function') {
-
-            grtSaveAllLibraryData();
-
-        } else if (typeof saveAllLibraryData === 'function') {
-
-            saveAllLibraryData();
-
-        }
-
-
-        window.grtIssueSelectedMember = null;
-
-
-        alert(
-            `Book "${book.title || accession}" successfully issued to ${member.name || member.id}.`
-        );
-
-
-        /*
-         * PAGE 3
-         */
-        loadModuleSubpage(
-            'circulation',
-            'Active Circulation'
-        );
-
-
-        return false;
-
-
-    } catch (error) {
-
-        console.error(
-            'Issue Book error:',
-            error
-        );
-
-        alert(
-            'Unable to issue the book. Please try again.'
-        );
-
-        return false;
-    }
-}
-
-
+ event.preventDefault();
+ const memberId = document.getElementById('issueMemberId').value.trim();
+ const accn = document.getElementById('issueAccn').value.trim().toUpperCase();
+
+ const member = dbMembers.find(m => m.id.toLowerCase() === memberId.toLowerCase());
+ if (!member) {
+ alert(`Member ID "${memberId}" not found.`);
+ return;
+ }
+ if (member.status !== "Active" || member.memberLock === "Yes") {
+ alert(`Cannot issue book: Member account is ${member.memberLock === "Yes" ? "LOCKED" : "Inactive"}.`);
+ return;
+ }
+
+ const book = dbBooks.find(b => b.accn.toUpperCase() === accn);
+ if (!book) {
+ alert(`Accession Number "${accn}" not found in catalogue.`);
+ return;
+ }
+
+ const isAlreadyIssued = dbIssues.some(i => i.accn.toUpperCase() === accn && i.status === "Issued");
+ if (isAlreadyIssued) {
+ alert(`Book "${book.title}" (${accn}) is already currently issued to another member.`);
+ return;
+ }
+
+ const today = new Date();
+ const dueDate = new Date();
+ dueDate.setDate(today.getDate() + 14);
+
+ dbIssues.push({
+ id: dbIssues.length + 1,
+ accn: book.accn,
+ title: book.title,
+ memberId: member.id,
+ memberName: member.name,
+ issueDate: today.toISOString().split('T')[0],
+ dueDate: dueDate.toISOString().split('T')[0],
+ renewals: 0,
+ status: "Issued"
+ });
+
+ grtSaveAllLibraryData();
+
+ alert(`Book "${book.title}" successfully issued to ${member.name}! Due Date: ${dueDate.toISOString().split('T')[0]}`);
+ loadModuleSubpage('circulation', 'Issue');
+ }
 
  function processReturnBook(accn) {
  const issueIdx = dbIssues.findIndex(i => i.accn.toUpperCase() === accn.toUpperCase() && i.status === "Issued");
@@ -2204,7 +1101,7 @@ function processIssueBook(event) {
  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
  if (diffDays > 0) {
- const fineAmt = diffDays * grtGetFinePerDay();
+ const fineAmt = diffDays * 2.0; 
  dbFines.push({
  id: dbFines.length + 1,
  memberId: issue.memberId,
@@ -2239,7 +1136,7 @@ function processIssueBook(event) {
  }
 
  const due = new Date(issue.dueDate);
- due.setDate(due.getDate() + grtGetLoanDays());
+ due.setDate(due.getDate() + 14);
  issue.dueDate = due.toISOString().split('T')[0];
  issue.renewals += 1;
 
@@ -2467,8 +1364,8 @@ function processIssueBook(event) {
 
 
 
-
-
+ 
+ 
 function previewMemberPhoto(input) {
 
  const preview = document.getElementById('memberPhotoPreview');
@@ -2542,7 +1439,7 @@ function saveMembersToStorage() {
  }
  }
 
-
+ 
 /* ============================================================
    FULL DATA PERSISTENCE LAYER - 20261006
    Keeps Books, Members, Issues, Reservations and Fines
@@ -3091,10 +1988,10 @@ function saveNewMember(event) {
  }
 
 
+ 
 
 
-
-
+ 
 function editMember(id) {
 
     const targetId = String(id || '').trim();
@@ -3179,7 +2076,7 @@ function editMember(id) {
             <button
                 type="button"
                 onclick="loadSubpage('Member')"
-                class="issue-member-next-opposite-photo px-3 py-1 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded text-xs font-bold">
+                class="px-3 py-1 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded text-xs font-bold">
                 &larr; Back
             </button>
 
@@ -4905,7 +3802,18 @@ function simulateBulkImport(count) {
  return;
  }
 
-
+ if (title === 'Settings') {
+ card.innerHTML = `
+ <div class="flex justify-between items-center mb-2">
+ <h2 class="text-sm font-bold text-blue-900 tracking-wider uppercase">EGATE (SETTINGS)</h2>
+ </div>
+ <div class="border border-gray-300 rounded p-6 bg-white shadow-sm text-xs w-full max-w-3xl space-y-4">
+ <p class="text-gray-700 font-semibold">eGate attendance reports and hardware barcode reader configurations.</p>
+ <button onclick="alert('Settings updated successfully!')" class="px-4 py-2 bg-blue-700 text-white font-bold rounded">Save Configuration</button>
+ </div>
+ `;
+ return;
+ }
  }
 
  /* --- CIRCULATION MODULE --- */
@@ -4915,514 +3823,328 @@ function simulateBulkImport(count) {
  return;
  }
 
- 
-if (title === 'Issue') {
-
-    /*
-     * ========================================================
-     * ISSUE WORKFLOW - PAGE 1
-     * MEMBER DETAILS
-     * ========================================================
-     */
-
-    card.innerHTML = `
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-
-            <div class="px-6 py-5 border-b border-slate-200 bg-slate-50">
-                <div class="flex items-center justify-between gap-4">
-                    <div>
-                        <h2 class="text-xl font-bold text-slate-800">
-                            Issue Book
-                        </h2>
-                        <p class="text-sm text-slate-500 mt-1">
-                            Step 1 of 3 — Enter Member Details
-                        </p>
-                    </div>
-
-                    <div class="flex items-center gap-2 text-xs font-semibold">
-                        <span class="px-3 py-1.5 rounded-full bg-blue-600 text-white">
-                            1 Member
-                        </span>
-                        <span class="text-slate-400">→</span>
-                        <span class="px-3 py-1.5 rounded-full bg-slate-100 text-slate-500">
-                            2 Book
-                        </span>
-                        <span class="text-slate-400">→</span>
-                        <span class="px-3 py-1.5 rounded-full bg-slate-100 text-slate-500">
-                            3 Active Circulation
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            <form id="grtIssueMemberStepForm"
-                  onsubmit="grtIssueGoToBookPage(event)"
-                  class="p-6">
-
-                <div class="max-w-3xl mx-auto">
-
-                    <div class="mb-6">
-                        <h3 class="text-lg font-bold text-slate-800">
-                            Member Details
-                        </h3>
-                        <p class="text-sm text-slate-500 mt-1">
-                            Enter or scan the Member ID. Member information will be filled automatically.
-                        </p>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">
-                                Member ID
-                            </label>
-
-                            <input
-                                type="text"
-                                id="issueMemberId"
-                                required
-                                autocomplete="off"
-                                placeholder="Enter / scan Member ID"
-                                oninput="grtIssueMemberLookup()"
-                                class="w-full px-4 py-3 border border-slate-300 rounded-xl outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">
-                                Member Name
-                            </label>
-
-                            <input
-                                type="text"
-                                id="issueMemberName"
-                                readonly
-                                class="w-full px-4 py-3 border border-slate-200 bg-slate-50 rounded-xl"
-                            >
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">
-                                Batch
-                            </label>
-
-                            <input
-                                type="text"
-                                id="issueMemberBatch"
-                                readonly
-                                class="w-full px-4 py-3 border border-slate-200 bg-slate-50 rounded-xl"
-                            >
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">
-                                Member Type
-                            </label>
-
-                            <input
-                                type="text"
-                                id="issueMemberType"
-                                readonly
-                                class="w-full px-4 py-3 border border-slate-200 bg-slate-50 rounded-xl"
-                            >
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">
-                                Department
-                            </label>
-
-                            <input
-                                type="text"
-                                id="issueMemberDepartment"
-                                readonly
-                                class="w-full px-4 py-3 border border-slate-200 bg-slate-50 rounded-xl"
-                            >
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-slate-700 mb-2">
-                                Section / Group
-                            </label>
-
-                            <input
-                                type="text"
-                                id="issueMemberGroup"
-                                readonly
-                                class="w-full px-4 py-3 border border-slate-200 bg-slate-50 rounded-xl"
-                            >
-                        </div>
-
-                    </div>
-
-                    <div class="mt-6 flex items-center gap-4">
-
-                        <div
-                            id="issueMemberPhotoPlaceholder"
-                            class="w-20 h-20 rounded-xl bg-slate-100 flex items-center justify-center text-xs text-slate-400"
-                        >
-                            NO PHOTO
-                        </div>
-
-                        <img
-                            id="issueMemberPhoto"
-                            class="hidden w-20 h-20 rounded-xl object-cover border border-slate-200"
-                            alt="Member Photo"
-                        >
-
-                        <div>
-                            <p class="text-sm font-semibold text-slate-700">
-                                Member Verification
-                            </p>
-
-                            <p
-                                id="issueMemberMessage"
-                                class="text-sm text-slate-500 mt-1"
-                            >
-                                Enter a valid Member ID.
-                            </p>
-                        </div>
-
-                    </div>
-
-                    <div class="mt-8 flex justify-end">
-
-                        <button
-                            type="submit"
-                            id="grtIssueNextToBookBtn"
-                            class="px-6 py-3 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
-                        >
-                            Next →
-                        </button>
-
-                    </div>
-
-                </div>
-            </form>
-        </div>
-    `;
-
-    return;
-}
-
-if (title === 'Active Circulation') {
-
-    /*
-     * ========================================================
-     * ISSUE WORKFLOW - PAGE 3
-     * ACTIVE CIRCULATION
-     * ========================================================
-     */
-
-    const activeIssues = Array.isArray(dbIssues)
-        ? dbIssues.filter(i =>
-            String(i.status || '').toLowerCase() === 'issued'
-        )
-        : [];
-
-    const rows = activeIssues.length
-        ? activeIssues.map((issue, index) => `
-            <tr class="border-b border-slate-100">
-                <td class="px-4 py-4 text-sm text-slate-600">
-                    ${index + 1}
-                </td>
-
-                <td class="px-4 py-4">
-                    <div class="font-semibold text-slate-800">
-                        ${issue.accn || '-'}
-                    </div>
-                </td>
-
-                <td class="px-4 py-4">
-                    <div class="font-semibold text-slate-800">
-                        ${issue.title || '-'}
-                    </div>
-                </td>
-
-                <td class="px-4 py-4">
-                    <div class="font-semibold text-slate-800">
-                        ${issue.memberName || '-'}
-                    </div>
-                    <div class="text-xs text-slate-500 mt-1">
-                        ${issue.memberId || '-'}
-                    </div>
-                </td>
-
-                <td class="px-4 py-4 text-sm text-slate-600">
-                    ${issue.issueDate || '-'}
-                </td>
-
-                <td class="px-4 py-4 text-sm text-slate-600">
-                    ${issue.dueDate || '-'}
-                </td>
-
-                <td class="px-4 py-4">
-                    <span class="inline-flex px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold">
-                        ISSUED
-                    </span>
-                </td>
-            </tr>
-        `).join('')
-        : `
-            <tr>
-                <td colspan="7" class="px-6 py-12 text-center text-slate-500">
-                    No active circulated books found.
-                </td>
-            </tr>
-        `;
-
-    card.innerHTML = `
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-
-            <div class="px-6 py-5 border-b border-slate-200 bg-slate-50">
-
-                <div class="flex items-center justify-between gap-4">
-
-                    <div>
-                        <h2 class="text-xl font-bold text-slate-800">
-                            Active Circulation
-                        </h2>
-
-                        <p class="text-sm text-slate-500 mt-1">
-                            Step 3 of 3 — Currently Circulated Books
-                        </p>
-                    </div>
-
-                    <span class="px-3 py-1.5 rounded-full bg-green-100 text-green-700 text-sm font-bold">
-                        ${activeIssues.length} Active
-                    </span>
-
-                </div>
-
-            </div>
-
-            <div class="p-6">
-
-                <div class="overflow-x-auto">
-
-                    <table class="w-full text-left">
-
-                        <thead>
-                            <tr class="border-b border-slate-200">
-
-                                <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase">
-                                    #
-                                </th>
-
-                                <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase">
-                                    Accession No.
-                                </th>
-
-                                <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase">
-                                    Book
-                                </th>
-
-                                <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase">
-                                    Member
-                                </th>
-
-                                <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase">
-                                    Issue Date
-                                </th>
-
-                                <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase">
-                                    Due Date
-                                </th>
-
-                                <th class="px-4 py-3 text-xs font-bold text-slate-500 uppercase">
-                                    Status
-                                </th>
-
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            ${rows}
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            </div>
-
-        </div>
-    `;
-
-    return;
-}
-
-if (title === 'Return') {
+ if (title === 'Issue') {
  const activeIssues = dbIssues.filter(i => i.status === "Issued");
+ const issueRows = activeIssues.map(i => `
+ <tr class="hover:bg-gray-50 border-b">
+ <td class="p-2 font-mono font-bold text-blue-900 border-r">${escapeHtml(i.accn)}</td>
+ <td class="p-2 font-semibold border-r">${escapeHtml(i.title)}</td>
+ <td class="p-2 font-mono border-r">${escapeHtml(i.memberId)}</td>
+ <td class="p-2 border-r">${escapeHtml(i.memberName)}</td>
+ <td class="p-2 border-r">${escapeHtml(i.issueDate)}</td>
+ <td class="p-2 font-bold text-amber-700">${escapeHtml(i.dueDate)}</td>
+ </tr>
+ `).join('');
 
+ card.innerHTML = `
+ <div class="flex justify-between items-center mb-2">
+ <h2 class="text-sm font-bold text-blue-900 tracking-wider uppercase">BOOK ISSUE MANAGEMENT</h2>
+ <span class="text-xs text-blue-700 font-bold bg-blue-50 border border-blue-200 px-3 py-1 rounded-full">${activeIssues.length} Currently Issued</span>
+ </div>
+
+ 
+<form onsubmit="processIssueBook(event)" class="border border-gray-300 rounded-xl p-5 bg-gray-50/70 shadow-sm text-xs w-full max-w-4xl space-y-4">
+
+ <p class="text-gray-800 font-bold text-sm">
+ Issue New Book to Member
+ </p>
+
+ <!-- MEMBER DETAILS -->
+ <div class="border border-blue-200 rounded-lg bg-white p-4 space-y-3">
+
+ <p class="font-bold text-blue-900">
+ Member Details
+ </p>
+
+ <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+ <div class="flex flex-col space-y-1">
+ <label class="font-semibold text-gray-700">
+ *Member ID
+ </label>
+
+ <input
+ type="text"
+ id="issueMemberId"
+ required
+ autocomplete="off"
+ placeholder="Type Member ID"
+ oninput="grtIssueMemberLookup()"
+ class="px-3 py-2 bg-white border border-gray-300 rounded uppercase"
+ >
+ </div>
+
+ <div class="flex flex-col space-y-1">
+ <label class="font-semibold text-gray-700">
+ Member Name
+ </label>
+
+ <input
+ type="text"
+ id="issueMemberName"
+ readonly
+ class="px-3 py-2 bg-gray-100 border border-gray-300 rounded"
+ >
+ </div>
+
+ <div class="flex flex-col space-y-1">
+ <label class="font-semibold text-gray-700">
+ Batch
+ </label>
+
+ <input
+ type="text"
+ id="issueMemberBatch"
+ readonly
+ class="px-3 py-2 bg-gray-100 border border-gray-300 rounded"
+ >
+ </div>
+
+ <div class="flex flex-col space-y-1">
+ <label class="font-semibold text-gray-700">
+ Type
+ </label>
+
+ <input
+ type="text"
+ id="issueMemberType"
+ readonly
+ class="px-3 py-2 bg-gray-100 border border-gray-300 rounded"
+ >
+ </div>
+
+ <div class="flex flex-col space-y-1">
+ <label class="font-semibold text-gray-700">
+ Department
+ </label>
+
+ <input
+ type="text"
+ id="issueMemberDepartment"
+ readonly
+ class="px-3 py-2 bg-gray-100 border border-gray-300 rounded"
+ >
+ </div>
+
+ <div class="flex flex-col space-y-1">
+ <label class="font-semibold text-gray-700">
+ Group
+ </label>
+
+ <input
+ type="text"
+ id="issueMemberGroup"
+ readonly
+ class="px-3 py-2 bg-gray-100 border border-gray-300 rounded"
+ >
+ </div>
+
+ </div>
+
+ <div class="flex items-center gap-4 pt-2">
+
+ <div class="w-24 h-28 border border-gray-300 rounded-lg bg-gray-100 overflow-hidden flex items-center justify-center">
+ <img
+ id="issueMemberPhoto"
+ src=""
+ alt="Member Photo"
+ class="w-full h-full object-cover hidden"
+ >
+
+ <span
+ id="issueMemberPhotoPlaceholder"
+ class="text-[10px] text-gray-400 text-center px-2"
+ >
+ NO PHOTO
+ </span>
+ </div>
+
+ <p
+ id="issueMemberMessage"
+ class="text-xs font-semibold text-gray-500"
+ ></p>
+
+ </div>
+
+ </div>
+
+ <!-- BOOK DETAILS -->
+ <div class="border border-indigo-200 rounded-lg bg-white p-4 space-y-3">
+
+ <p class="font-bold text-indigo-900">
+ Book Details
+ </p>
+
+ <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+ <div class="flex flex-col space-y-1">
+ <label class="font-semibold text-gray-700">
+ *Accession Number
+ </label>
+
+ <input
+ type="text"
+ id="issueAccn"
+ required
+ autocomplete="off"
+ placeholder="Type Book Accession"
+ oninput="grtIssueBookLookup()"
+ class="px-3 py-2 bg-white border border-gray-300 rounded uppercase"
+ >
+ </div>
+
+ <div class="flex flex-col space-y-1">
+ <label class="font-semibold text-gray-700">
+ Book Title
+ </label>
+
+ <input
+ type="text"
+ id="issueBookTitle"
+ readonly
+ class="px-3 py-2 bg-gray-100 border border-gray-300 rounded"
+ >
+ </div>
+
+ <div class="flex flex-col space-y-1">
+ <label class="font-semibold text-gray-700">
+ Author
+ </label>
+
+ <input
+ type="text"
+ id="issueBookAuthor"
+ readonly
+ class="px-3 py-2 bg-gray-100 border border-gray-300 rounded"
+ >
+ </div>
+
+ <div class="flex flex-col space-y-1">
+ <label class="font-semibold text-gray-700">
+ Publisher
+ </label>
+
+ <input
+ type="text"
+ id="issueBookPublisher"
+ readonly
+ class="px-3 py-2 bg-gray-100 border border-gray-300 rounded"
+ >
+ </div>
+
+ <div class="flex flex-col space-y-1">
+ <label class="font-semibold text-gray-700">
+ Edition
+ </label>
+
+ <input
+ type="text"
+ id="issueBookEdition"
+ readonly
+ class="px-3 py-2 bg-gray-100 border border-gray-300 rounded"
+ >
+ </div>
+
+ </div>
+
+ <p
+ id="issueBookMessage"
+ class="text-xs font-semibold text-gray-500"
+ ></p>
+
+ </div>
+
+ <div class="pt-2 flex justify-end">
+
+ <button
+ type="submit"
+ class="px-6 py-2 bg-blue-700 hover:bg-blue-800 text-white font-bold rounded shadow"
+ >
+ Issue Book
+ </button>
+
+ </div>
+
+</form>
+
+
+ <div class="border border-gray-300 rounded bg-white shadow-sm overflow-hidden w-full max-w-5xl mt-3 flex flex-col">
+ <h3 class="p-3 bg-gray-100 font-bold text-xs uppercase text-gray-700 border-b">Active Circulated Books</h3>
+ <table class="w-full text-left border-collapse text-[11px]">
+ <thead class="bg-gray-50 text-gray-700 uppercase border-b border-gray-200">
+ <tr>
+ <th class="p-2 border-r">Accession No</th>
+ <th class="p-2 border-r">Book Title</th>
+ <th class="p-2 border-r">Member ID</th>
+ <th class="p-2 border-r">Member Name</th>
+ <th class="p-2 border-r">Issue Date</th>
+ <th class="p-2">Due Date</th>
+ </tr>
+ </thead>
+ <tbody>
+ ${issueRows.length > 0 ? issueRows : `<tr><td colspan="6" class="text-center py-8 text-gray-400 italic">No active book issues found.</td></tr>`}
+ </tbody>
+ </table>
+ </div>
+ `;
+ return;
+ }
+
+ if (title === 'Return') {
+ const activeIssues = dbIssues.filter(i => i.status === "Issued");
  const returnRows = activeIssues.map(i => {
  const today = new Date();
  const due = new Date(i.dueDate);
  const isOverdue = today > due;
- const diffDays = isOverdue
-     ? Math.ceil((today - due) / (1000 * 60 * 60 * 24))
-     : 0;
-
+ const diffDays = isOverdue ? Math.ceil((today - due) / (1000 * 60 * 60 * 24)) : 0;
  return `
- <tr
-     data-return-row="1"
-     class="hover:bg-gray-50 border-b"
- >
+ <tr class="hover:bg-gray-50 border-b">
  <td class="p-2 font-mono font-bold text-blue-900 border-r">${escapeHtml(i.accn)}</td>
-
- <td class="p-2 font-semibold border-r">
-     ${escapeHtml(i.title)}
- </td>
-
- <td class="p-2 font-mono border-r">
-     ${escapeHtml(i.memberId)}
- </td>
-
+ <td class="p-2 font-semibold border-r">${escapeHtml(i.title)}</td>
+ <td class="p-2 font-mono border-r">${escapeHtml(i.memberId)}</td>
+ <td class="p-2 border-r">${escapeHtml(i.memberName)}</td>
+ <td class="p-2 border-r font-bold ${isOverdue ? 'text-rose-600' : 'text-gray-700'}">${escapeHtml(i.dueDate)}</td>
  <td class="p-2 border-r">
-     ${escapeHtml(i.memberName)}
+ <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isOverdue ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'}">
+ ${isOverdue ? `${diffDays} Days Overdue (₹${diffDays * 2})` : 'Normal'}
+ </span>
  </td>
-
- <td class="p-2 border-r font-bold ${isOverdue ? 'text-rose-600' : 'text-gray-700'}">
-     ${escapeHtml(i.dueDate)}
- </td>
-
- <td class="p-2 border-r">
-     <span class="px-2 py-0.5 rounded text-[10px] font-bold ${isOverdue ? 'bg-rose-100 text-rose-800' : 'bg-emerald-100 text-emerald-800'}">
-         ${isOverdue ? `${diffDays} Days Overdue (₹${diffDays * 2})` : 'Normal'}
-     </span>
- </td>
-
  <td class="p-2 text-center">
-     ${
-         (() => {
-             const returnState = grtCanReturnBook(i);
-
-             if (returnState.allowed) {
-                 return `
-                     <button
-                         type="button"
-                         onclick="processReturnBook('${i.accn}')"
-                         class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded shadow-sm text-xs"
-                     >
-                         Return
-                     </button>
-                 `;
-             }
-
-             if (returnState.hasFine && returnState.isOverdue) {
-                 return `
-                     <span class="inline-block px-3 py-1 bg-rose-100 text-rose-700 rounded font-bold text-[10px]">
-                         Overdue + Fine Pending
-                     </span>
-                 `;
-             }
-
-             if (returnState.hasFine) {
-                 return `
-                     <span class="inline-block px-3 py-1 bg-amber-100 text-amber-700 rounded font-bold text-[10px]">
-                         Fine Pending
-                     </span>
-                 `;
-             }
-
-             return `
-                 <span class="inline-block px-3 py-1 bg-rose-100 text-rose-700 rounded font-bold text-[10px]">
-                     Overdue
-                 </span>
-             `;
-         })()
-     }
+ <button onclick="processReturnBook('${i.accn}')" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded shadow-sm text-xs">Return</button>
  </td>
  </tr>
  `;
  }).join('');
 
  card.innerHTML = `
- <div class="flex justify-between items-center mb-2 flex-wrap gap-2">
-     <h2 class="text-sm font-bold text-blue-900 tracking-wider uppercase">
-         BOOK RETURN DESK
-     </h2>
-
-     <span class="text-xs text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
-         ${activeIssues.length} Awaiting Return
-     </span>
- </div>
-
- <div class="border border-gray-300 rounded-xl bg-white shadow-sm p-4 mb-3">
-     <div class="flex flex-col gap-2">
-         <label
-             for="grtReturnBookSearch"
-             class="text-xs font-bold text-gray-700"
-         >
-             Search Issued Book
-         </label>
-
-         <div class="flex flex-col sm:flex-row gap-2">
-             <input
-                 type="text"
-                 id="grtReturnBookSearch"
-                 placeholder="Search accession, title, member ID or member name..."
-                 class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"
-                 oninput="grtFilterReturnBooks()"
-                 autocomplete="off"
-             >
-
-             <button
-                 type="button"
-                 onclick="document.getElementById('grtReturnBookSearch').value=''; grtFilterReturnBooks(); document.getElementById('grtReturnBookSearch').focus();"
-                 class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold rounded-lg text-sm"
-             >
-                 Clear
-             </button>
-         </div>
-
-         <p class="text-[11px] text-gray-500">
-             Search using Accession No, Book Title, Member ID or Member Name.
-         </p>
-     </div>
- </div>
-
- <div
-     id="grtReturnNoSearchResults"
-     class="hidden border border-amber-200 bg-amber-50 text-amber-800 rounded-lg px-4 py-3 mb-3 text-sm font-semibold"
- >
-     No matching issued book found.
+ <div class="flex justify-between items-center mb-2">
+ <h2 class="text-sm font-bold text-blue-900 tracking-wider uppercase">BOOK RETURN DESK</h2>
+ <span class="text-xs text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">${activeIssues.length} Awaiting Return</span>
  </div>
 
  <div class="border border-gray-300 rounded bg-white shadow-sm overflow-hidden w-full max-w-5xl flex flex-col">
-     <table class="w-full text-left border-collapse text-[11px]">
-
-         <thead class="bg-gray-100 text-gray-700 uppercase border-b border-gray-300">
-             <tr>
-                 <th class="p-2 border-r">Accession</th>
-                 <th class="p-2 border-r">Title</th>
-                 <th class="p-2 border-r">Member ID</th>
-                 <th class="p-2 border-r">Member Name</th>
-                 <th class="p-2 border-r">Due Date</th>
-                 <th class="p-2 border-r">Overdue Status</th>
-                 <th class="p-2 text-center">Action</th>
-             </tr>
-         </thead>
-
-         <tbody id="grtReturnBookTableBody">
-             ${
-                 returnRows.length > 0
-                 ? returnRows
-                 : `<tr>
-                     <td colspan="7" class="text-center py-12 text-gray-400 italic">
-                         No issued books pending return!
-                     </td>
-                 </tr>`
-             }
-         </tbody>
-
-     </table>
+ <table class="w-full text-left border-collapse text-[11px]">
+ <thead class="bg-gray-100 text-gray-700 uppercase border-b border-gray-300">
+ <tr>
+ <th class="p-2 border-r">Accession</th>
+ <th class="p-2 border-r">Title</th>
+ <th class="p-2 border-r">Member ID</th>
+ <th class="p-2 border-r">Member Name</th>
+ <th class="p-2 border-r">Due Date</th>
+ <th class="p-2 border-r">Overdue Status</th>
+ <th class="p-2 text-center">Action</th>
+ </tr>
+ </thead>
+ <tbody>
+ ${returnRows.length > 0 ? returnRows : `<tr><td colspan="7" class="text-center py-12 text-gray-400 italic">No issued books pending return!</td></tr>`}
+ </tbody>
+ </table>
  </div>
  `;
  return;
-}
+ }
 
-if (title === 'Renewal') {
+ if (title === 'Renewal') {
  const activeIssues = dbIssues.filter(i => i.status === "Issued");
  const renewalRows = activeIssues.map(i => `
  <tr class="hover:bg-gray-50 border-b">
@@ -5525,287 +4247,7 @@ if (title === 'Renewal') {
  return;
  }
 
- 
-/* GRT_FINE_SETTINGS_SAFE_V2 */
-
-const GRT_FINE_SETTINGS_KEY = 'GRT_FINE_SETTINGS';
-
-function grtGetFineSettings() {
-    try {
-        const saved = localStorage.getItem(GRT_FINE_SETTINGS_KEY);
-        const data = saved ? JSON.parse(saved) : {};
-
-        return {
-            loanDays: Math.max(1, Math.min(365, Number(data.loanDays) || 14)),
-            finePerDay: Math.max(0, Math.min(10000, Number(data.finePerDay) || 2))
-        };
-    } catch (error) {
-        return {
-            loanDays: 14,
-            finePerDay: 2
-        };
-    }
-}
-
-function grtGetLoanDays() {
-    return grtGetFineSettings().loanDays;
-}
-
-function grtGetFinePerDay() {
-    return grtGetFineSettings().finePerDay;
-}
-
-function grtOpenFineSettings() {
-    const old = document.getElementById('grtFineSettingsModal');
-
-    if (old) {
-        old.remove();
-    }
-
-    const settings = grtGetFineSettings();
-
-    const modal = document.createElement('div');
-
-    modal.id = 'grtFineSettingsModal';
-
-    modal.className =
-        'fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 p-4';
-
-    modal.innerHTML = `
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md">
-
-            <div class="bg-blue-800 text-white px-5 py-4">
-                <h2 class="text-lg font-bold">
-                    Fine Collection Settings
-                </h2>
-
-                <p class="text-xs text-blue-100 mt-1">
-                    Change due period and fine amount
-                </p>
-            </div>
-
-            <div class="p-5 space-y-5">
-
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">
-                        Loan / Due Period
-                    </label>
-
-                    <div class="flex items-center gap-2">
-                        <input
-                            id="grtFineLoanDays"
-                            type="number"
-                            min="1"
-                            max="365"
-                            value="${settings.loanDays}"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                        >
-
-                        <span class="text-sm font-semibold">
-                            Days
-                        </span>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-bold text-gray-700 mb-2">
-                        Fine per Overdue Day
-                    </label>
-
-                    <div class="flex items-center gap-2">
-                        <span class="font-bold">₹</span>
-
-                        <input
-                            id="grtFinePerDay"
-                            type="number"
-                            min="0"
-                            max="10000"
-                            step="0.01"
-                            value="${settings.finePerDay}"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                        >
-
-                        <span class="text-sm font-semibold">
-                            / day
-                        </span>
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="px-5 py-4 bg-gray-50 border-t flex justify-end gap-3">
-
-                <button
-                    type="button"
-                    id="grtFineSettingsCancel"
-                    class="px-4 py-2 rounded-lg border border-gray-300 font-semibold"
-                >
-                    Cancel
-                </button>
-
-                <button
-                    type="button"
-                    id="grtFineSettingsSave"
-                    class="px-5 py-2 rounded-lg bg-blue-700 text-white font-bold"
-                >
-                    Save Settings
-                </button>
-
-            </div>
-
-        </div>
-    `;
-
-    document.body.appendChild(modal);
-
-    document
-        .getElementById('grtFineSettingsCancel')
-        .onclick = function () {
-            modal.remove();
-        };
-
-    document
-        .getElementById('grtFineSettingsSave')
-        .onclick = function () {
-
-            const loanDays =
-                Number(document.getElementById('grtFineLoanDays').value);
-
-            const finePerDay =
-                Number(document.getElementById('grtFinePerDay').value);
-
-            if (!Number.isFinite(loanDays) || loanDays < 1 || loanDays > 365) {
-                alert('Enter a due period between 1 and 365 days.');
-                return;
-            }
-
-            if (!Number.isFinite(finePerDay) || finePerDay < 0 || finePerDay > 10000) {
-                alert('Enter a fine amount between ₹0 and ₹10,000 per day.');
-                return;
-            }
-
-            localStorage.setItem(
-                GRT_FINE_SETTINGS_KEY,
-                JSON.stringify({
-                    loanDays: loanDays,
-                    finePerDay: finePerDay
-                })
-            );
-
-            modal.remove();
-
-            alert('Fine Collection settings saved successfully.');
-
-            if (typeof loadModuleSubpage === 'function') {
-                loadModuleSubpage('circulation', 'Fine Collection');
-            }
-        };
-}
-
-/* END GRT_FINE_SETTINGS_SAFE_V2 */
-
-
-function grtSaveCirculationSettings() {
-    const loanInput = document.getElementById("grtSettingsLoanDays");
-    const fineInput = document.getElementById("grtSettingsFinePerDay");
-
-    if (!loanInput || !fineInput) {
-        alert("Settings fields were not found.");
-        return;
-    }
-
-    const loanDays = Math.max(
-        1,
-        Math.min(365, Number(loanInput.value) || 14)
-    );
-
-    const finePerDay = Math.max(
-        0,
-        Math.min(10000, Number(fineInput.value) || 0)
-    );
-
-    localStorage.setItem(
-        "GRT_FINE_SETTINGS",
-        JSON.stringify({
-            loanDays: loanDays,
-            finePerDay: finePerDay
-        })
-    );
-
-    alert("Circulation settings saved successfully.");
-
-    if (typeof loadModuleSubpage === "function") {
-        loadModuleSubpage("circulation", "Settings");
-    }
-}
-
-if (title === 'Settings') {
-    const settings = grtGetFineSettings();
-
-    subpage.innerHTML = `
-        <div class="max-w-3xl mx-auto">
-            <div class="bg-white rounded-2xl shadow border border-gray-200 overflow-hidden">
-                <div class="bg-blue-800 text-white px-6 py-5">
-                    <h2 class="text-xl font-bold">Circulation Settings</h2>
-                    <p class="text-sm text-blue-100 mt-1">
-                        Configure loan period and overdue fine amount.
-                    </p>
-                </div>
-
-                <div class="p-6 space-y-6">
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2">
-                            Loan / Due Period (Days)
-                        </label>
-                        <input
-                            id="grtSettingsLoanDays"
-                            type="number"
-                            min="1"
-                            max="365"
-                            value="${settings.loanDays}"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                        <p class="text-xs text-gray-500 mt-1">
-                            Example: 14 days
-                        </p>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700 mb-2">
-                            Fine per Overdue Day (₹)
-                        </label>
-                        <input
-                            id="grtSettingsFinePerDay"
-                            type="number"
-                            min="0"
-                            max="10000"
-                            step="0.01"
-                            value="${settings.finePerDay}"
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                        <p class="text-xs text-gray-500 mt-1">
-                            Example: ₹2 per overdue day
-                        </p>
-                    </div>
-
-                    <div class="flex justify-end">
-                        <button
-                            type="button"
-                            onclick="grtSaveCirculationSettings()"
-                            class="px-6 py-3 bg-blue-700 hover:bg-blue-800 text-white font-bold rounded-lg"
-                        >
-                            Save Settings
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-
-    return;
-}
-
-if (title === 'Fine Collection') {
+ if (title === 'Fine Collection') {
  const totalPending = dbFines.filter(f => f.status === 'Pending').reduce((acc, f) => acc + f.fineAmount, 0);
  const fineRows = dbFines.map(f => `
  <tr class="hover:bg-gray-50 border-b">
@@ -6010,7 +4452,7 @@ if (title === 'Fine Collection') {
  <div class="flex justify-between items-center mb-2">
  <h2 class="text-sm font-bold text-blue-900 tracking-wider uppercase">ADMINISTRATION & SECURITY (SYSTEM SETTINGS & PASSWORD CHANGE)</h2>
  </div>
-
+ 
  <div class="relative overflow-hidden border border-slate-200/90 rounded-2xl bg-gradient-to-br from-white via-slate-50/50 to-blue-50/20 shadow-xl p-8 w-full max-w-3xl space-y-6">
  <div class="absolute -right-12 -top-12 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -6077,12 +4519,51 @@ if (title === 'Fine Collection') {
  return;
  }
 
+ if (title === 'User Roles') {
+ const roleRows = systemUserRoles.map(u => `
+ <tr class="hover:bg-gray-50 border-b">
+ <td class="p-2 font-mono font-bold text-blue-900 border-r">${escapeHtml(u.account)}</td>
+ <td class="p-2 font-semibold border-r">${escapeHtml(u.role)}</td>
+ <td class="p-2 text-gray-700 border-r">${escapeHtml(u.privileges)}</td>
+ <td class="p-2 border-r"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${u.status === 'Active' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">${escapeHtml(u.status)}</span></td>
+ <td class="p-2 text-center">
+ <button onclick="editUserRole(${u.id})" class="px-3 py-1 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-600 hover:text-white rounded shadow-sm font-bold transition-all flex items-center gap-1.5 mx-auto">
+ <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+ Edit
+ </button>
+ </td>
+ </tr>
+ `).join('');
+
+ card.innerHTML = `
+ <div class="flex justify-between items-center mb-2">
+ <h2 class="text-sm font-bold text-blue-900 tracking-wider uppercase">ADMINISTRATION & SECURITY (USER ROLES)</h2>
+ </div>
+ <div class="border border-gray-300 rounded bg-white shadow-sm overflow-hidden w-full max-w-5xl p-4 space-y-3 text-xs">
+ <p class="text-gray-700 font-semibold">Manage system operator roles and permission matrices for library staff.</p>
+ <table class="w-full text-left border-collapse text-[11px] mt-2">
+ <thead class="bg-gray-100 uppercase border-b">
+ <tr>
+ <th class="p-2 border-r">User Account</th>
+ <th class="p-2 border-r">Assigned Role</th>
+ <th class="p-2 border-r">Privileges</th>
+ <th class="p-2 border-r">Status</th>
+ <th class="p-2 text-center">Action</th>
+ </tr>
+ </thead>
+ <tbody>${roleRows}</tbody>
+ </table>
+ </div>
+ `;
+ return;
+ }
+
  if (title === 'Database Backup') {
  card.innerHTML = `
  <div class="flex justify-between items-center mb-2">
  <h2 class="text-sm font-bold text-blue-900 tracking-wider uppercase">ADMINISTRATION & SECURITY (DATABASE BACKUP)</h2>
  </div>
-
+ 
  <div id="backupActiveCard" class="relative overflow-hidden border border-slate-200/90 rounded-2xl bg-gradient-to-br from-white via-slate-50/50 to-blue-50/30 shadow-xl p-8 w-full max-w-4xl space-y-6 transition-all duration-300">
  <div class="absolute -right-12 -top-12 w-48 h-48 bg-blue-400/10 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -6135,7 +4616,26 @@ if (title === 'Fine Collection') {
  return;
  }
 
- 
+ if (title === 'Audit Logs') {
+ card.innerHTML = `
+ <div class="flex justify-between items-center mb-2">
+ <h2 class="text-sm font-bold text-blue-900 tracking-wider uppercase">ADMINISTRATION & SECURITY (AUDIT LOGS)</h2>
+ </div>
+ <div class="border border-gray-300 rounded bg-white shadow-sm overflow-hidden w-full max-w-5xl p-4 space-y-3 text-xs">
+ <p class="text-gray-700 font-semibold">Review security event histories and administrative actions.</p>
+ <table class="w-full text-left border-collapse text-[11px] mt-2">
+ <thead class="bg-gray-100 uppercase">
+ <tr><th class="p-2 border-r">Timestamp</th><th class="p-2 border-r">User</th><th class="p-2 border-r">Action Performed</th><th class="p-2">IP Address</th></tr>
+ </thead>
+ <tbody>
+ <tr class="border-b"><td class="p-2 border-r font-mono">02 Oct 2026, 03:41 PM</td><td class="p-2 border-r font-bold">admin_grt</td><td class="p-2 border-r">Admin Gateway Successful Login</td><td class="p-2 font-mono">192.168.1.50</td></tr>
+ <tr class="border-b"><td class="p-2 border-r font-mono">01 Oct 2026, 10:15 AM</td><td class="p-2 border-r font-bold">librarian_01</td><td class="p-2 border-r">Book Issue Processed (CS1001)</td><td class="p-2 font-mono">192.168.1.52</td></tr>
+ </tbody>
+ </table>
+ </div>
+ `;
+ return;
+ }
  }
 
  /* --- HELP MODULE --- */
@@ -6599,7 +5099,7 @@ window.onload = function() {
  card.innerHTML = `
  <div class="w-full max-w-4xl mx-auto pt-4">
  <h2 class="text-center font-black text-gray-800 text-sm tracking-widest uppercase mb-6">SIMPLE SEARCH</h2>
-
+ 
  <form onsubmit="executeSimpleSearch(event)" class="bg-[#f8fafc] border border-gray-300 rounded-2xl p-8 shadow-sm space-y-5 text-xs">
  <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
  <label class="md:col-span-3 font-bold text-gray-700 text-right pr-4">Res. Type</label>
@@ -7119,7 +5619,7 @@ function addEGateEntry(entry) {
  renderMemberFilter("All");
  }
 
-
+ 
 
  function initRequestedChanges() {
  createFilterButtons();
@@ -7304,7 +5804,7 @@ function saveNewBookEntry(event) {
  ============================================================ */
 
 
-
+ 
 /* ============================================================
  GRT - DELETE CATALOGUE BOOK
  Removes one book by accession number.

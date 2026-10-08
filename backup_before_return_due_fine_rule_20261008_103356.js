@@ -46,111 +46,6 @@ let dbMembers = [];
  let dbFines = [];
 
 /* GRT_RETURN_SEARCH_V1 */
-/* GRT_RETURN_DUE_FINE_RULE_V1 */
-function grtReturnHasOutstandingFine(issue) {
-    try {
-        if (!Array.isArray(dbFines)) {
-            return false;
-        }
-
-        const issueAccn = String(
-            issue.accn ||
-            issue.accession ||
-            issue.accessionNumber ||
-            ''
-        ).trim().toLowerCase();
-
-        const issueMemberId = String(
-            issue.memberId ||
-            issue.member ||
-            issue.memberID ||
-            ''
-        ).trim().toLowerCase();
-
-        return dbFines.some(fine => {
-            const fineAccn = String(
-                fine.accn ||
-                fine.accession ||
-                fine.accessionNumber ||
-                ''
-            ).trim().toLowerCase();
-
-            const fineMemberId = String(
-                fine.memberId ||
-                fine.member ||
-                fine.memberID ||
-                ''
-            ).trim().toLowerCase();
-
-            const sameBook =
-                fineAccn &&
-                issueAccn &&
-                fineAccn === issueAccn;
-
-            const sameMember =
-                fineMemberId &&
-                issueMemberId &&
-                fineMemberId === issueMemberId;
-
-            if (!sameBook && !sameMember) {
-                return false;
-            }
-
-            const status = String(
-                fine.status ||
-                fine.paymentStatus ||
-                ''
-            ).trim().toLowerCase();
-
-            if (
-                status === 'paid' ||
-                status === 'cleared' ||
-                status === 'collected' ||
-                status === 'settled'
-            ) {
-                return false;
-            }
-
-            const amount = Number(
-                fine.amount ??
-                fine.fineAmount ??
-                fine.fine ??
-                fine.balance ??
-                fine.pendingAmount ??
-                0
-            );
-
-            return amount > 0;
-        });
-
-    } catch (error) {
-        console.error(
-            'Return fine check error:',
-            error
-        );
-
-        return false;
-    }
-}
-
-function grtCanReturnBook(issue) {
-    const today = new Date();
-    const due = new Date(issue.dueDate);
-
-    const isOverdue =
-        !Number.isNaN(due.getTime()) &&
-        today > due;
-
-    const hasFine =
-        grtReturnHasOutstandingFine(issue);
-
-    return {
-        allowed: !isOverdue && !hasFine,
-        isOverdue,
-        hasFine
-    };
-}
-
 function grtFilterReturnBooks() {
     const input = document.getElementById('grtReturnBookSearch');
     const tbody = document.getElementById('grtReturnBookTableBody');
@@ -5293,45 +5188,13 @@ if (title === 'Return') {
  </td>
 
  <td class="p-2 text-center">
-     ${
-         (() => {
-             const returnState = grtCanReturnBook(i);
-
-             if (returnState.allowed) {
-                 return `
-                     <button
-                         type="button"
-                         onclick="processReturnBook('${i.accn}')"
-                         class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded shadow-sm text-xs"
-                     >
-                         Return
-                     </button>
-                 `;
-             }
-
-             if (returnState.hasFine && returnState.isOverdue) {
-                 return `
-                     <span class="inline-block px-3 py-1 bg-rose-100 text-rose-700 rounded font-bold text-[10px]">
-                         Overdue + Fine Pending
-                     </span>
-                 `;
-             }
-
-             if (returnState.hasFine) {
-                 return `
-                     <span class="inline-block px-3 py-1 bg-amber-100 text-amber-700 rounded font-bold text-[10px]">
-                         Fine Pending
-                     </span>
-                 `;
-             }
-
-             return `
-                 <span class="inline-block px-3 py-1 bg-rose-100 text-rose-700 rounded font-bold text-[10px]">
-                     Overdue
-                 </span>
-             `;
-         })()
-     }
+     <button
+         type="button"
+         onclick="processReturnBook('${i.accn}')"
+         class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded shadow-sm text-xs"
+     >
+         Return
+     </button>
  </td>
  </tr>
  `;

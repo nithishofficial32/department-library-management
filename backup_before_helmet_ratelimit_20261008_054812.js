@@ -354,7 +354,6 @@ app.get(
 
 app.post(
     "/api/login",
-    loginRateLimit,
     async (req, res) => {
 
         try {

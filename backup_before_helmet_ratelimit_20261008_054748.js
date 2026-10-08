@@ -2,48 +2,10 @@ const express = require("express");
 const path = require("path");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const helmet = require("helmet");
-const rateLimit = require("express-rate-limit");
 require("dotenv").config();
 const mongoose = require("mongoose");
 
 const app = express();
-
-/* =====================================
-   SECURITY MIDDLEWARE
-===================================== */
-
-app.disable("x-powered-by");
-
-app.use(
-    helmet({
-        contentSecurityPolicy: false
-    })
-);
-
-const loginRateLimit = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    limit: 10,
-    standardHeaders: "draft-8",
-    legacyHeaders: false,
-    message: {
-        success: false,
-        message: "Too many login attempts. Please try again later."
-    }
-});
-
-const apiRateLimit = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    limit: 300,
-    standardHeaders: "draft-8",
-    legacyHeaders: false,
-    message: {
-        success: false,
-        message: "Too many requests. Please try again later."
-    }
-});
-
-app.use("/api", apiRateLimit);
 
 const PORT = process.env.PORT || 5000;
 
@@ -354,7 +316,6 @@ app.get(
 
 app.post(
     "/api/login",
-    loginRateLimit,
     async (req, res) => {
 
         try {

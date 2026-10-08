@@ -45,6 +45,42 @@ const apiRateLimit = rateLimit({
 
 app.use("/api", apiRateLimit);
 
+/* =====================================
+   SECURITY MIDDLEWARE
+===================================== */
+
+app.disable("x-powered-by");
+
+app.use(
+    helmet({
+        contentSecurityPolicy: false
+    })
+);
+
+const loginRateLimit = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 10,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    message: {
+        success: false,
+        message: "Too many login attempts. Please try again later."
+    }
+});
+
+const apiRateLimit = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 300,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    message: {
+        success: false,
+        message: "Too many requests. Please try again later."
+    }
+});
+
+app.use("/api", apiRateLimit);
+
 const PORT = process.env.PORT || 5000;
 
 const USERNAME = "admin";
@@ -354,7 +390,6 @@ app.get(
 
 app.post(
     "/api/login",
-    loginRateLimit,
     async (req, res) => {
 
         try {
